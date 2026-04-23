@@ -1,42 +1,20 @@
 <!DOCTYPE html>
-<html lang="ja" data-theme="dark">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>販売計算ツール | GMC Chill Smoke v2</title>
 <style>
-    /* CSS変数のベース定義 */
+    /* CSS変数のベース定義（ダークモード固定） */
     :root {
-        --theme-primary: #1e293b;
-        --theme-bg: #f8fafc;
-        --theme-card-bg: #ffffff;
-        --theme-accent-solid: #6366f1;
-        --border: #e2e8f0;
-        --danger: #ef4444;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --input-bg: #ffffff;
-        --input-text: #0f172a;
-        --tab-bg: #f1f5f9;
-        --tab-hover: #e2e8f0;
-        --makanai-bg: #fffbeb;
-        --makanai-border: #fef3c7;
-        --makanai-text: #92400e;
-        --muted: #64748b;
-        --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        
-        --primary: var(--custom-primary, var(--theme-primary));
-        --bg: var(--custom-bg, var(--theme-bg));
-        --card-bg: var(--custom-card-bg, var(--theme-card-bg));
-        --accent-solid: var(--custom-accent, var(--theme-accent-solid));
-        --accent: linear-gradient(135deg, var(--accent-solid) 0%, #a855f7 100%);
-    }
-
-    [data-theme="dark"] {
         --theme-primary: #f8fafc;
         --theme-bg: #0f172a;
         --theme-card-bg: #1e293b;
+        --theme-accent-solid: #6366f1;
         --border: #334155;
+        --danger: #ef4444;
+        --success: #10b981;
+        --warning: #f59e0b;
         --input-bg: #0f172a;
         --input-text: #f8fafc;
         --tab-bg: #334155;
@@ -45,6 +23,13 @@
         --makanai-border: #78350f;
         --makanai-text: #fcd34d;
         --muted: #94a3b8;
+        --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        
+        --primary: var(--custom-primary, var(--theme-primary));
+        --bg: var(--custom-bg, var(--theme-bg));
+        --card-bg: var(--custom-card-bg, var(--theme-card-bg));
+        --accent-solid: var(--custom-accent, var(--theme-accent-solid));
+        --accent: linear-gradient(135deg, var(--accent-solid) 0%, #a855f7 100%);
     }
 
     html { 
@@ -71,12 +56,8 @@
         background-position: center;
         background-size: contain;
         opacity: 0.05;
+        filter: invert(1);
         display: none; 
-    }
-    
-    [data-theme="dark"] .bg-watermark {
-        opacity: 0.05;
-        filter: invert(1); 
     }
 
     @keyframes fadeInUp {
@@ -141,7 +122,6 @@
     .btn-order { background: var(--tab-bg); color: var(--primary); padding: 5px 10px; font-size: 0.8em; border: 1px solid var(--border); border-radius: 6px; }
     .btn-order:disabled { opacity: 0.2; cursor: default; transform: none; box-shadow: none; }
 
-    /* 検索ポップアップの修正 */
     @keyframes popupFadeIn {
         from { opacity: 0; transform: translate(-50%, 10px); }
         to { opacity: 1; transform: translate(-50%, 0); }
@@ -149,7 +129,7 @@
     .search-popup {
         display: none;
         position: absolute;
-        top: 60px; left: 50%; transform: translate(-50%, 0); /* 最初から中央に配置 */
+        top: 60px; left: 50%; transform: translate(-50%, 0);
         width: 90%; max-width: 400px;
         background: var(--card-bg); padding: 10px 15px; border-radius: 12px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--border);
@@ -256,19 +236,16 @@
 </style>
 </head>
 <body>
-<!-- 背景ロゴ -->
 <div class="bg-watermark" id="watermark"></div>
 
 <div id="loading-overlay"><div class="loader"></div><h3 style="font-weight:800; color:var(--muted)">Secure Cloud Syncing...</h3></div>
 
-<!-- 検索ポップアップ -->
 <div id="search-popup" class="search-popup">
     <input type="text" class="search-input" id="search-query" placeholder="商品名、カテゴリを入力..." oninput="handleSearch(this.value)">
     <button class="btn-back" style="padding: 10px;" onclick="closeSearchPopup()">✖</button>
 </div>
 
 <div id="main-app" style="display: none;">
-    <!-- スクロールしても固定されるヘッダー -->
     <header class="sticky-wrapper" id="fixed-header">
         <div class="header-content">
             <div class="header-top">
@@ -279,7 +256,6 @@
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button id="main-settings-btn" class="theme-toggle-btn" onclick="openSettingsPrompt()" title="設定">⚙️</button>
-                    <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切り替え">🌙</button>
                 </div>
             </div>
 
@@ -328,7 +304,6 @@
             
             <div id="settings-list-container" class="view-container"></div>
             
-            <!-- システム設定画面 -->
             <div id="system-settings-container" class="view-container" style="display:none;">
                 <div class="category-section">
                     <h3 class="category-title" style="margin-bottom:20px;">システム・デザイン設定</h3>
@@ -402,8 +377,10 @@
     </main>
 </div>
 
-<!-- モーダル類 -->
+<!-- メッセージ -->
 <div id="message-box"></div>
+
+<!-- パスワードモーダル -->
 <div id="password-modal" class="modal-overlay">
     <div class="modal-content" style="text-align:center;">
         <h3 style="margin-bottom:10px;">ADMIN ACCESS</h3>
@@ -509,7 +486,6 @@
     </div>
 </div>
 
-<!-- 画像プレビュー用モーダル -->
 <div id="image-preview-modal" class="modal-overlay" onclick="closeImagePreview()" style="cursor: pointer; z-index: 4000;">
     <div style="position:relative; max-width:90vw; max-height:90vh; display:flex; justify-content:center; align-items:center;">
         <img id="preview-image" src="" style="max-width: 400px; max-height: 400px; width: 100%; height: 100%; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 3px solid var(--accent-solid); object-fit: contain;">
@@ -645,14 +621,6 @@
         } catch (e) { console.error(e); showMessage("保存エラー", "error"); }
     };
 
-    window.toggleTheme = () => { 
-        const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; 
-        document.documentElement.setAttribute('data-theme', t); localStorage.setItem('pos_theme', t); 
-        document.getElementById('theme-toggle-btn').textContent = t==='dark'?'☀️':'🌙'; 
-    };
-    const savedT = localStorage.getItem('pos_theme') || 'dark'; document.documentElement.setAttribute('data-theme', savedT);
-    window.onload = () => { document.getElementById('theme-toggle-btn').textContent = savedT==='dark'?'☀️':'🌙'; };
-
     window.switchTab = t => { 
         if(currentTab === '設定' && t !== '設定' && hasUnsavedChanges){ showConfirm("変更を保存せずに戻りますか？", r=>{if(r){hasUnsavedChanges=false; execTab(t);}}); return; } 
         execTab(t); 
@@ -743,7 +711,7 @@
                 
                 let nameDisplay = `<div class="product-name">${p.name}</div>`;
                 if (p.imageUrl) {
-                    nameDisplay = `<div class="product-name" style="cursor:pointer; color:var(--accent-solid); text-decoration:underline; text-underline-offset:3px;" onclick="openImagePreview('${p.imageUrl}')" title="画像を見る">${p.name}</div>`;
+                    nameDisplay = `<div class="product-name" style="cursor:pointer; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px;" onclick="openImagePreview('${p.imageUrl}')" title="画像を見る">${p.name}</div>`;
                 }
 
                 h+=`<div class="product-row"><div class="product-info">${nameDisplay}<div class="product-meta"><span style="color:var(--accent-solid); font-weight:800; min-width:85px;">${prDisp}</span><span>${rec && rec !== '0' ?'回復量:'+rec+'%':''}</span><span style="color:${noteColor}; font-weight:${noteWeight}; font-size:0.85em;">${p.notes?p.notes:''}</span></div></div>
@@ -783,7 +751,7 @@
                 
                 let nameDisplay = `<strong style="display:block; margin-bottom:2px;">${p.name}</strong>`;
                 if (p.imageUrl) {
-                    nameDisplay = `<strong style="display:block; margin-bottom:2px; cursor:pointer; color:var(--accent-solid); text-decoration:underline; text-underline-offset:3px;" onclick="openImagePreview('${p.imageUrl}')" title="画像を見る">${p.name}</strong>`;
+                    nameDisplay = `<strong style="display:block; margin-bottom:2px; cursor:pointer; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px;" onclick="openImagePreview('${p.imageUrl}')" title="画像を見る">${p.name}</strong>`;
                 }
 
                 h+=`<div class="settings-item"><div class="settings-info">${nameDisplay}<div style="font-size:0.85em; color:var(--muted);">¥${p.price.toLocaleString()} ${p.recovery && p.recovery !== '0' ? '/ 回復量: ' + p.recovery + '%' : ''}</div><div style="font-size:0.75em; color:${noteColor}; font-weight:${noteWeight}; opacity:1;">${p.notes || ''}</div></div><div class="settings-actions-group"><div class="settings-btns"><button class="btn-accent" style="padding:6px 10px; font-size:0.75em;" onclick="editProduct(${p.id})">編集</button><button class="btn-danger" style="padding:6px 10px; font-size:0.75em;" onclick="delP(${p.id})">削除</button></div><div class="settings-order-stack"><button class="btn-order btn-small-order" onclick="moveProduct(${p.id}, -1)" ${pIdx === 0 ? 'disabled' : ''}>▲</button><button class="btn-order btn-small-order" onclick="moveProduct(${p.id}, 1)" ${pIdx === catPs.length - 1 ? 'disabled' : ''}>▼</button></div></div></div>`; 
