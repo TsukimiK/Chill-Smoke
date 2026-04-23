@@ -64,7 +64,7 @@
     
     .sticky-wrapper { 
         position: sticky; top: 0; background-color: var(--bg); z-index: 100; 
-        padding: 15px 0; border-bottom: 1px solid var(--border); margin-bottom: 25px;
+        padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 25px;
         backdrop-filter: blur(8px);
     }
 
@@ -108,7 +108,7 @@
     .btn-order:disabled { opacity: 0.2; cursor: default; transform: none; box-shadow: none; }
 
     .total-display { 
-        display: flex; align-items: center; gap: 12px; background: var(--card-bg); padding: 8px 20px; 
+        display: flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 8px 20px; 
         border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--header-shadow); 
     }
     .total-price { font-size: 1.6em; font-weight: 800; color: var(--accent-solid); }
@@ -122,7 +122,7 @@
         margin-bottom: 30px; background: var(--card-bg); border: 1px solid var(--border); 
         border-radius: 16px; padding: 20px; box-shadow: var(--card-shadow); box-sizing: border-box; 
     }
-    .category-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--tab-bg); padding-bottom: 12px; margin-bottom: 18px; }
+    .category-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--tab-bg); padding-bottom: 12px; margin-bottom: 18px; gap: 10px; }
     .category-title { margin: 0; color: var(--primary); font-size: 1.2em; font-weight: 800; }
     
     .product-row { 
@@ -243,6 +243,7 @@
 
 <div id="message-box"></div>
 
+<!-- パスワードモーダル -->
 <div id="password-modal" class="modal-overlay">
     <div class="modal-content">
         <h3>ADMIN ACCESS</h3>
@@ -255,6 +256,7 @@
     </div>
 </div>
 
+<!-- 確認モーダル -->
 <div id="confirm-modal" class="modal-overlay">
     <div class="modal-content">
         <h3 id="confirm-title" style="margin-bottom:10px;">CONFIRMATION</h3>
@@ -266,6 +268,7 @@
     </div>
 </div>
 
+<!-- 商品登録/編集モーダル -->
 <div id="edit-modal" class="modal-overlay">
     <div class="modal-content">
         <h3 id="modal-title">PRODUCT EDIT</h3>
@@ -304,12 +307,25 @@
     </div>
 </div>
 
+<!-- カテゴリ名編集モーダル -->
+<div id="cat-edit-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>RENAME CATEGORY</h3>
+        <p style="color:var(--muted); font-size:0.85em;">このカテゴリ内の全商品のカテゴリ名を変更します</p>
+        <input type="text" id="cat-rename-input">
+        <div style="margin-top:25px; display:flex; justify-content:center; gap:12px;">
+            <button onclick="closeCatModal()" class="btn-back">CANCEL</button>
+            <button class="btn-accent" onclick="saveCategoryRename()">適用する</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Firebase設定 (ユーザー指定)
+    // Firebase設定
     const firebaseConfig = {
         apiKey: "AIzaSyCv9wbRcl4pu1RRFFQ0KS_ift9SoQZobJU",
         authDomain: "chillsmoke-365c3.firebaseapp.com",
@@ -324,20 +340,20 @@
     const db = getFirestore(app);
     const appId = 'chill-smoke-app-v1';
 
-    let user=null, products=[], localCounts={}, currentTab='恒常商品', currentSettingsTab='恒常商品', isMakanai=false, hasUnsavedChanges=false, confirmCallback=null, editingId=null, isLoggedIn=false;
+    let user=null, products=[], localCounts={}, currentTab='恒常商品', currentSettingsTab='恒常商品', isMakanai=false, hasUnsavedChanges=false, confirmCallback=null, editingId=null, isLoggedIn=false, oldCatNameForRename = null;
 
-    // 商品初期値データ
+    // 商品初期値データ（更新版）
     const defaultProducts = [
         // --- 恒常商品 ---
         { id: 101, page: "恒常商品", category: "マルコポーロシリーズ", name: "レッド", price: 100000, recovery: "10", notes: "1箱10本入り" },
         { id: 102, page: "恒常商品", category: "マルコポーロシリーズ", name: "グリーン", price: 200000, recovery: "20", notes: "1箱10本入り" },
         { id: 103, page: "恒常商品", category: "マルコポーロシリーズ", name: "ゴールド", price: 300000, recovery: "30", notes: "1箱10本入り" },
         { id: 104, page: "恒常商品", category: "マルコポーロシリーズ", name: "ブルー", price: 500000, recovery: "40", notes: "1箱10本入り" },
-        { id: 105, page: "恒常商品", category: "その他", name: "Low Lite", price: 200000, recovery: "20", notes: "" },
-        { id: 106, page: "恒常商品", category: "その他", name: "Fortissimo", price: 300000, recovery: "30", notes: "" },
-        { id: 107, page: "恒常商品", category: "その他", name: "SIRIUS PUPLE8", price: 300000, recovery: "30", notes: "" },
-        { id: 108, page: "恒常商品", category: "その他", name: "Rock Star", price: 500000, recovery: "40", notes: "" },
-        { id: 109, page: "恒常商品", category: "その他", name: "Rose Gold", price: 800000, recovery: "50", notes: "" },
+        { id: 105, page: "恒常商品", category: "スペシャル", name: "Low Lite", price: 200000, recovery: "20", notes: "" },
+        { id: 106, page: "恒常商品", category: "スペシャル", name: "Fortissimo", price: 300000, recovery: "30", notes: "" },
+        { id: 107, page: "恒常商品", category: "スペシャル", name: "SIRIUS PUPLE8", price: 300000, recovery: "30", notes: "" },
+        { id: 108, page: "恒常商品", category: "スペシャル", name: "Rock Star", price: 500000, recovery: "40", notes: "" },
+        { id: 109, page: "恒常商品", category: "スペシャル", name: "Rose Gold", price: 800000, recovery: "50", notes: "" },
         { id: 110, page: "恒常商品", category: "嗅ぎ煙草", name: "KING", price: 50000, recovery: "40", notes: "単品" },
         { id: 111, page: "恒常商品", category: "嗅ぎ煙草", name: "CIGAR OF LOS SANTOS", price: 80000, recovery: "50", notes: "単品" },
         { id: 112, page: "恒常商品", category: "Vape", name: "ぷかぷか", price: 100000, recovery: "10", notes: "" },
@@ -346,6 +362,8 @@
         { id: 115, page: "恒常商品", category: "ギフト用", name: "Chocolat Cigarettes Sweet", price: 1000000, recovery: "50", notes: "" },
         { id: 116, page: "恒常商品", category: "ギフト用", name: "Chocolat Cigarettes Bitter", price: 1000000, recovery: "50", notes: "" },
         { id: 117, page: "恒常商品", category: "ギフト用", name: "Pure White", price: 1000000, recovery: "50", notes: "" },
+        { id: 118, page: "恒常商品", category: "その他（特殊商品）", name: "ENFORCER（単品）", price: 50000, recovery: "40", notes: "PDのみ購入可能" },
+        { id: 119, page: "恒常商品", category: "その他（特殊商品）", name: "cute milky", price: 300000, recovery: "30", notes: "姫宮みくる、兎水もも限定販売" },
         // --- 卸商品 ---
         { id: 201, page: "卸商品", category: "リッパーDOC.", name: "抑制剤", price: 300000, recovery: "0", notes: "" },
         { id: 202, page: "卸商品", category: "ZENTU", name: "777", price: 200000, recovery: "0", notes: "" },
@@ -354,10 +372,9 @@
         { id: 205, page: "卸商品", category: "ZENTU", name: "めたみん", price: 300000, recovery: "0", notes: "" },
         { id: 206, page: "卸商品", category: "ZENTU", name: "Royal Pain", price: 150000, recovery: "0", notes: "1箱5本入り" },
         { id: 207, page: "卸商品", category: "紫福屋", name: "紫煙", price: 300000, recovery: "0", notes: "" },
-        { id: 208, page: "卸商品", category: "フォトスタジオ", name: "霞-Kasumi-", price: 100000, recovery: "0", notes: "" }
+        { id: 208, page: "卸商品", category: "Noir et Blanc(フォトスタジオ)", name: "霞-Kasumi-", price: 100000, recovery: "0", notes: "" }
     ];
 
-    // Authエラー回避のための堅牢なログイン処理
     const initAuth = async () => {
         try {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -366,12 +383,7 @@
                 await signInAnonymously(auth);
             }
         } catch (err) {
-            // Mismatchエラー等の場合は匿名認証へフォールバック
-            if (err.code === 'auth/custom-token-mismatch' || err.code === 'auth/invalid-custom-token') {
-                await signInAnonymously(auth);
-            } else {
-                console.error("Auth Init Error:", err);
-            }
+            await signInAnonymously(auth);
         }
     };
 
@@ -389,9 +401,7 @@
                     products=JSON.parse(JSON.stringify(defaultProducts)); 
                     renderCalc(); 
                 }
-            }, err => {
-                console.error("Firestore Snapshot Error:", err);
-            });
+            }, err => console.error(err));
         }
     });
     initAuth();
@@ -403,7 +413,6 @@
         document.getElementById('theme-toggle-btn').textContent = t==='dark'?'☀️':'🌙'; 
     };
     
-    // デフォルトナイトモード
     const savedT = localStorage.getItem('pos_theme') || 'dark'; 
     document.documentElement.setAttribute('data-theme', savedT); 
     window.onload = () => {
@@ -545,7 +554,10 @@
         cats.forEach((cat, cIdx)=>{ 
             let h=`<div class="category-section">
                 <div class="category-header">
-                    <h3 class="category-title">${cat}</h3>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <h3 class="category-title">${cat}</h3>
+                        <button class="btn-order" style="padding:2px 6px; font-size:0.7em;" onclick="openCatRenameModal('${cat}')">✎</button>
+                    </div>
                     <div class="header-right">
                         <button class="btn-success" style="padding:6px 12px; font-size:0.75em;" onclick="openAddModal('${currentSettingsTab}', '${cat}')">追加</button>
                         <button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', -1)" ${cIdx === 0 ? 'disabled' : ''}>▲</button>
@@ -575,6 +587,28 @@
             h+='</div>'; c.innerHTML+=h; 
         });
     }
+
+    // カテゴリ名称変更
+    window.openCatRenameModal = (oldName) => {
+        oldCatNameForRename = oldName;
+        document.getElementById('cat-rename-input').value = oldName;
+        document.getElementById('cat-edit-modal').style.display = 'flex';
+    };
+    window.closeCatModal = () => { document.getElementById('cat-edit-modal').style.display = 'none'; };
+    window.saveCategoryRename = () => {
+        const newName = document.getElementById('cat-rename-input').value.trim();
+        if(!newName || newName === oldCatNameForRename) { closeCatModal(); return; }
+        
+        products.forEach(p => {
+            if(p.page === currentSettingsTab && p.category === oldCatNameForRename) {
+                p.category = newName;
+            }
+        });
+        markAsUnsaved();
+        renderSettings();
+        closeCatModal();
+        showMessage("CATEGORY RENAMED", "success");
+    };
 
     window.moveCategory = (page, targetCat, direction) => {
         const ps = products.filter(p => p.page === page);
