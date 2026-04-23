@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>販売計算ツール (ChillSmoke Cloud)</title>
+<style>
+    :root {
+        --primary: #333; --bg: #f4f4f9; --card-bg: #fff; --border: #ddd;
+        --accent: #007bff; --danger: #dc3545; --success: #28a745; --warning: #ffc107;
+        --input-bg: #fdfdfd; --input-text: #333; --tab-bg: #e9ecef; --tab-hover: #d3d9df;
+        --makanai-bg: #fff3cd; --makanai-border: #ffeeba; --makanai-text: #856404; --muted: #666;
+    }
+    [data-theme="dark"] {
+        --primary: #e0e0e0; --bg: #121212; --card-bg: #1e1e1e; --border: #333;
+        --accent: #66b2ff; --danger: #ff6b6b; --success: #4cd964; --warning: #ffcc00;
+        --input-bg: #2c2c2c; --input-text: #e0e0e0; --tab-bg: #2c2c2c; --tab-hover: #3d3d3d;
+        --makanai-bg: #3a2e0a; --makanai-border: #5c4d20; --makanai-text: #ffd54f; --muted: #aaa;
+    }
+    body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif; background-color: var(--bg); color: var(--primary); margin: 0; padding: 0; line-height: 1.4; }
+    .container { max-width: 800px; margin: 0 auto; padding: 0 15px; }
+    
+    /* ヘッダー固定 */
+    .sticky-wrapper { position: sticky; top: 0; background-color: var(--bg); z-index: 100; padding: 10px 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+    
+    /* タブ */
+    .tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid var(--primary); }
+    .tab-btn { flex: 1; text-align: center; padding: 12px 5px; background: var(--tab-bg); color: var(--primary); font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; border: none; font-size: 0.95em; transition: 0.2s; }
+    .tab-btn.active { background: var(--primary); color: white; }
+    
+    .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+    .header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .header-right { display: flex; gap: 8px; }
+    h1 { margin: 0; font-size: 1.3em; }
+    
+    button { cursor: pointer; padding: 8px 12px; border: none; border-radius: 6px; background-color: var(--primary); color: white; font-weight: bold; font-size: 0.9em; transition: opacity 0.2s; white-space: nowrap; }
+    button:hover { opacity: 0.8; }
+    .btn-danger { background-color: var(--danger); } 
+    .btn-success { background-color: var(--success); } 
+    .btn-accent { background-color: var(--accent); } 
+    .btn-warning { background-color: var(--warning); color: #333; }
+    
+    /* レジボタン */
+    .btn-calc { padding: 6px 10px; min-width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 1em; }
+    
+    .total-display { display: flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .total-price { font-size: 1.4em; font-weight: bold; color: var(--accent); }
+    
+    .makanai-container { display: flex; align-items: center; gap: 6px; font-weight: bold; background: var(--makanai-bg); color: var(--makanai-text); padding: 8px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--makanai-border); font-size: 0.9em; }
+    
+    .category-section { margin-bottom: 25px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .category-title { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 15px; color: var(--primary); font-size: 1.1em; }
+    
+    .product-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 12px 0; border-bottom: 1px dashed var(--border); gap: 10px; }
+    .product-row:last-child { border-bottom: none; }
+    .product-info { flex: 1; min-width: 0; }
+    .product-name { font-size: 1.1em; font-weight: bold; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .product-meta { font-size: 0.85em; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    
+    .product-controls { display: flex; align-items: center; gap: 4px; }
+    .control-group { display: flex; gap: 2px; }
+    
+    .count-input { font-size: 1.2em; font-weight: bold; width: 80px; height: 38px; text-align: center; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--input-text); box-sizing: border-box; }
+    .count-input::-webkit-outer-spin-button, .count-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    
+    .theme-toggle-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--primary); font-size: 1.1em; padding: 6px 12px; border-radius: 20px; cursor: pointer; }
+    
+    #message-box { position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; color: white; font-weight: bold; display: none; z-index: 3000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+    .modal-content { background: var(--card-bg); padding: 25px; border-radius: 12px; min-width: 300px; max-width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 8px 0; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 1em; }
+    .modal-content label { display: block; text-align: left; font-size: 0.85em; font-weight: bold; color: var(--muted); margin-top: 5px; }
+    
+    #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .loader { border: 5px solid var(--border); border-top: 5px solid var(--accent); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    
+    @media (max-width: 700px) {
+        .product-row { flex-direction: column; align-items: stretch; gap: 10px; }
+        .product-controls { justify-content: space-between; width: 100%; }
+        .count-input { flex: 1; min-width: 60px; }
+    }
+    
+    .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); gap: 10px; }
+    .settings-info { flex: 1; text-align: left; }
+    .settings-actions { display: flex; gap: 5px; }
+    #unsaved-warning { background: #fdeaea; color: #d9534f; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; border: 1px solid #ebccd1; }
+</style>
+</head>
+<body>
+<div id="loading-overlay"><div class="loader"></div><h3>クラウドと同期中...</h3></div>
+<div class="container" id="main-app" style="display: none;">
+    <div class="sticky-wrapper">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h1 style="margin: 0;">販売計算ツール</h1>
+                <span id="cloud-status" style="font-size: 0.75em; color: var(--success); font-weight: bold;">☁️ 同期完了</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="theme-toggle-btn" onclick="openSettingsPrompt()" title="設定">⚙️</button>
+                <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切り替え">🌙</button>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('恒常商品')" id="tab-kojo">恒常商品</button>
+            <button class="tab-btn" onclick="switchTab('卸商品')" id="tab-oroshi">卸商品</button>
+        </div>
+        <div class="header" id="header-actions">
+            <!-- 計算機モードヘッダー -->
+            <div id="calc-header-left" class="header-left">
+                <div class="total-display">
+                    <span style="font-weight:bold; color:var(--muted); font-size:0.85em;">合計:</span> 
+                    <span class="total-price">¥<span id="grand-total">0</span></span>
+                    <button class="btn-success" onclick="copyResult()">コピー</button>
+                </div>
+                <label id="makanai-label" class="makanai-container"><input type="checkbox" id="makanai-check" onchange="toggleMakanai()">まかない割</label>
+            </div>
+            <div id="calc-header-right" class="header-right"><button class="btn-danger" onclick="resetAll()">全リセット</button></div>
+            
+            <!-- 設定モードヘッダー -->
+            <div id="settings-header-left" style="display:none;"><span id="unsaved-warning" style="display:none;">⚠️ 未保存</span></div>
+            <div id="settings-header-right" style="display:none;"><button class="btn-success" onclick="confirmSaveSettings()">💾 クラウドへ保存</button></div>
+        </div>
+    </div>
+    
+    <div id="calc-view"><div id="categories-container"></div></div>
+    
+    <div id="settings-view" style="display:none;">
+        <div class="tabs"><button class="tab-btn active" onclick="switchSettingsTab('恒常商品')" id="settings-tab-kojo">恒常</button><button class="tab-btn" onclick="switchSettingsTab('卸商品')" id="settings-tab-oroshi">卸</button></div>
+        <div class="settings-form">
+            <input type="text" id="new-category" placeholder="種類・店舗名"><input type="text" id="new-name" placeholder="商品名"><input type="number" id="new-price" placeholder="価格">
+            <input type="text" id="new-recovery" placeholder="回復量"><input type="text" id="new-notes" placeholder="備考"><button class="btn-accent" onclick="addProduct()">追加</button>
+        </div>
+        <div id="settings-list-container"></div>
+        <div style="margin-top:20px; text-align:center;"><button class="btn-warning" onclick="restoreDefaultProducts()">初期状態に戻す(クラウド上書き)</button></div>
+    </div>
+</div>
+
+<!-- モーダル類 -->
+<div id="message-box"></div>
+<div id="password-modal" class="modal-overlay"><div class="modal-content"><h3>設定アクセス</h3><p>パスワードを入力してください</p><input type="password" id="pass-in" onkeypress="if(event.key==='Enter')verifyPassword()"><div style="margin-top:15px; display:flex; justify-content:center; gap:10px;"><button onclick="closePasswordModal()" style="background:#888;">戻る</button><button class="btn-success" onclick="verifyPassword()">OK</button></div></div></div>
+<div id="confirm-modal" class="modal-overlay"><div class="modal-content"><h3>確認</h3><p id="confirm-msg" style="white-space:pre-wrap;"></p><div style="margin-top:15px; display:flex; justify-content:center; gap:10px;"><button onclick="closeConfirm(false)" style="background:#888;">いいえ</button><button class="btn-danger" onclick="closeConfirm(true)">はい</button></div></div></div>
+<div id="edit-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>商品の編集</h3>
+        <label>カテゴリ/店舗</label><input type="text" id="edit-category">
+        <label>商品名</label><input type="text" id="edit-name">
+        <label>価格</label><input type="number" id="edit-price">
+        <label>回復量</label><input type="text" id="edit-recovery">
+        <label>備考</label><input type="text" id="edit-notes">
+        <div style="margin-top:15px; display:flex; justify-content:center; gap:10px;">
+            <button onclick="closeEditModal()" style="background:#888;">キャンセル</button>
+            <button class="btn-success" onclick="saveEdit()">変更を適用</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Firebase設定
+    const firebaseConfig = {
+        apiKey: "AIzaSyCv9wbRcl4pu1RRFFQ0KS_ift9SoQZobJU",
+        authDomain: "chillsmoke-365c3.firebaseapp.com",
+        projectId: "chillsmoke-365c3",
+        storageBucket: "chillsmoke-365c3.firebasestorage.app",
+        messagingSenderId: "355538265143",
+        appId: "1:355538265143:web:0b6e54fe2356920e0acbb2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = 'chill-smoke-app-v1';
+
+    let user=null, products=[], localCounts={}, currentTab='恒常商品', currentSettingsTab='恒常商品', isMakanai=false, hasUnsavedChanges=false, confirmCallback=null, editingId=null;
+
+    const defaultProducts = [
+        { id: 1, page: "恒常商品", category: "マルコポーロ", name: "レッド", price: 100000, recovery: "10%", notes: "10本入" },
+        { id: 2, page: "恒常商品", category: "マルコポーロ", name: "グリーン", price: 200000, recovery: "20%", notes: "10本入" },
+        { id: 3, page: "恒常商品", category: "マルコポーロ", name: "ゴールド", price: 300000, recovery: "30%", notes: "10本入" },
+        { id: 4, page: "恒常商品", category: "マルコポーロ", name: "ブルー", price: 500000, recovery: "40%", notes: "10本入" },
+        { id: 11, page: "恒常商品", category: "Vape", name: "ぷかぷか", price: 100000, recovery: "10%", notes: "" },
+        { id: 12, page: "恒常商品", category: "Vape", name: "もくもく", price: 200000, recovery: "20%", notes: "" },
+        { id: 13, page: "恒常商品", category: "Gift", name: "Chocolat Cigarettes Sweet", price: 1000000, recovery: "50%", notes: "" },
+        { id: 14, page: "恒常商品", category: "Gift", name: "Chocolat Cigarettes Bitter", price: 1000000, recovery: "50%", notes: "" },
+        { id: 15, page: "恒常商品", category: "Gift", name: "Pure White", price: 1000000, recovery: "50%", notes: "" },
+        { id: 19, page: "恒常商品", category: "スペシャル", name: "Chill Smoke", price: 300000, recovery: "30%", notes: "" }
+    ];
+
+    onAuthStateChanged(auth, u => { user=u; if(u){
+        onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), s => {
+            document.getElementById('loading-overlay').style.display='none'; document.getElementById('main-app').style.display='block';
+            if(s.exists() && !hasUnsavedChanges){ products=s.data().list; renderCalc(); if(currentTab==='設定')renderSettings(); }
+            else if(!s.exists() && !hasUnsavedChanges){ products=JSON.parse(JSON.stringify(defaultProducts)); renderCalc(); }
+        }, err => console.error(err));
+    }});
+    signInAnonymously(auth);
+
+    // テーマ切替
+    window.toggleTheme = () => { 
+        const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; 
+        document.documentElement.setAttribute('data-theme', t); 
+        localStorage.setItem('pos_theme', t); 
+        document.getElementById('theme-toggle-btn').textContent = t==='dark'?'☀️':'🌙'; 
+    };
+    const savedT = localStorage.getItem('pos_theme') || 'light'; 
+    document.documentElement.setAttribute('data-theme', savedT); 
+    document.getElementById('theme-toggle-btn').textContent = savedT==='dark'?'☀️':'🌙';
+
+    // タブ切替
+    window.switchTab = t => { 
+        if(currentTab==='設定'&&hasUnsavedChanges){ 
+            showConfirm("変更を破棄して移動しますか？", r=>{if(r){hasUnsavedChanges=false; execTab(t);}}); 
+            return; 
+        } 
+        execTab(t); 
+    };
+    function execTab(t){ 
+        currentTab=t; 
+        document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('active')); 
+        if(t==='恒常商品')document.getElementById('tab-kojo').classList.add('active'); 
+        if(t==='卸商品')document.getElementById('tab-oroshi').classList.add('active');
+        document.getElementById('calc-view').style.display = t==='設定'?'none':'block'; 
+        document.getElementById('settings-view').style.display = t==='設定'?'block':'none';
+        document.getElementById('calc-header-left').style.display = t==='設定'?'none':'flex'; 
+        document.getElementById('calc-header-right').style.display = t==='設定'?'none':'flex';
+        document.getElementById('settings-header-left').style.display = t==='設定'?'flex':'none'; 
+        document.getElementById('settings-header-right').style.display = t==='設定'?'flex':'none';
+        document.getElementById('makanai-label').style.display = t==='恒常商品'?'flex':'none';
+        if(t==='設定')renderSettings(); else renderCalc();
+    }
+
+    // パスワード
+    window.openSettingsPrompt = () => { document.getElementById('pass-in').value=''; document.getElementById('password-modal').style.display='flex'; setTimeout(()=>document.getElementById('pass-in').focus(),100); };
+    window.verifyPassword = () => { if(document.getElementById('pass-in').value==='7073'){ document.getElementById('password-modal').style.display='none'; switchTab('設定'); } else showMessage("パスワードが違います", "error"); };
+    window.closePasswordModal = () => document.getElementById('password-modal').style.display='none';
+
+    // クラウド保存
+    window.confirmSaveSettings = async () => { 
+        showConfirm("設定をクラウドに保存し、全員に共有しますか？", async r => { 
+            if(r){ 
+                document.getElementById('cloud-status').textContent="☁️ 保存中...";
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products});
+                hasUnsavedChanges=false; 
+                document.getElementById('unsaved-warning').style.display='none'; 
+                document.getElementById('cloud-status').textContent="☁️ 同期完了"; 
+                showMessage("保存完了", "success");
+            }
+        });
+    };
+
+    // レジロジック
+    window.changeCount = (id, a) => { 
+        localCounts[id]=(localCounts[id]||0)+a; 
+        if(localCounts[id]<0)localCounts[id]=0; 
+        document.getElementById(`count-${id}`).value=localCounts[id]; 
+        updateTotal(); 
+    };
+    window.updateCountDirectly = (id, v) => { 
+        let n = parseInt(v); 
+        if(isNaN(n)||n<0)n=0; 
+        localCounts[id]=n; 
+        updateTotal(); 
+    };
+    window.resetAll = () => { 
+        showConfirm("個数をリセットしますか？", r=>{if(r){products.forEach(p=>{if(p.page===currentTab)localCounts[p.id]=0;});renderCalc();}}); 
+    };
+    window.toggleMakanai = () => { isMakanai=document.getElementById('makanai-check').checked; renderCalc(); };
+    function updateTotal(){ 
+        let t=0; 
+        products.forEach(p=>{ 
+            if(p.page===currentTab){ 
+                let c=localCounts[p.id]||0, pr=p.price; 
+                if(currentTab==='恒常商品'&&isMakanai)pr=Math.floor(pr*0.6); 
+                t+=pr*c; 
+            }
+        }); 
+        document.getElementById('grand-total').textContent=t.toLocaleString(); 
+    }
+    window.copyResult = () => { 
+        let t=0; 
+        products.forEach(p=>{ 
+            if(p.page===currentTab){ 
+                let c=localCounts[p.id]||0, pr=p.price; 
+                if(currentTab==='恒常商品'&&isMakanai)pr=Math.floor(pr*0.6); 
+                t+=pr*c; 
+            }
+        }); 
+        if(t===0){showMessage("商品が選ばれていません","error");return;} 
+        const tx=document.createElement('textarea'); 
+        tx.value=t.toString(); 
+        document.body.appendChild(tx); 
+        tx.select(); 
+        document.execCommand('copy'); 
+        document.body.removeChild(tx); 
+        showMessage("合計金額をコピーしました", "success"); 
+    };
+
+    // 計算描画
+    function renderCalc(){ 
+        const container=document.getElementById('categories-container'); 
+        container.innerHTML=''; 
+        const ps=products.filter(p=>p.page===currentTab); 
+        const cats=[...new Set(ps.map(p=>p.category))];
+        cats.forEach(cat=>{ 
+            const cps=ps.filter(p=>p.category===cat); 
+            let h=`<div class="category-section"><h2 class="category-title">${cat}</h2>`; 
+            cps.forEach(p=>{ 
+                let prDisp=`¥${p.price.toLocaleString()}`; 
+                if(currentTab==='恒常商品'&&isMakanai)prDisp=`<span style="text-decoration:line-through; font-size:0.8em; color:var(--muted); font-weight:normal;">¥${p.price.toLocaleString()}</span> ¥${Math.floor(p.price*0.6).toLocaleString()}`;
+                h+=`<div class="product-row">
+                    <div class="product-info">
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-meta">
+                            <span style="color:var(--accent); font-weight:bold; font-size:1.15em; min-width:85px;">${prDisp}</span>
+                            <span>${p.recovery?'回復:'+p.recovery:''}</span>
+                            <span>${p.notes?p.notes:''}</span>
+                        </div>
+                    </div>
+                    <div class="product-controls">
+                        <div class="control-group">
+                            <button class="btn-calc" onclick="changeCount(${p.id},-100)">-100</button>
+                            <button class="btn-calc" onclick="changeCount(${p.id},-10)">-10</button>
+                            <button class="btn-calc" onclick="changeCount(${p.id},-1)">-</button>
+                        </div>
+                        <input type="number" class="count-input" id="count-${p.id}" value="${localCounts[p.id]||0}" onchange="updateCountDirectly(${p.id},this.value)">
+                        <div class="control-group">
+                            <button class="btn-calc" onclick="changeCount(${p.id},1)">+</button>
+                            <button class="btn-calc" onclick="changeCount(${p.id},10)">+10</button>
+                            <button class="btn-calc" onclick="changeCount(${p.id},100)">+100</button>
+                        </div>
+                    </div>
+                </div>`;
+            }); 
+            h+='</div>'; container.innerHTML+=h; 
+        }); 
+        updateTotal(); 
+    }
+
+    // 設定描画
+    window.switchSettingsTab = t => { 
+        currentSettingsTab=t; 
+        document.querySelectorAll('#settings-view .tab-btn').forEach(b=>b.classList.remove('active')); 
+        if(t==='恒常商品')document.getElementById('settings-tab-kojo').classList.add('active'); 
+        else document.getElementById('settings-tab-oroshi').classList.add('active'); 
+        document.getElementById('new-page').value=t; 
+        renderSettings(); 
+    };
+    function renderSettings(){ 
+        const container=document.getElementById('settings-list-container'); 
+        container.innerHTML=''; 
+        const ps=products.filter(p=>p.page===currentSettingsTab); 
+        const cats=[...new Set(ps.map(p=>p.category))];
+        cats.forEach(cat=>{ 
+            let h=`<div class="category-section"><h3 class="category-title">${cat}</h3>`; 
+            ps.filter(p=>p.category===cat).forEach(p=>{ 
+                h+=`<div class="settings-item">
+                    <div class="settings-info"><strong>${p.name}</strong> (¥${p.price.toLocaleString()})</div>
+                    <div class="settings-actions">
+                        <button class="btn-accent" onclick="editProduct(${p.id})">編集</button>
+                        <button class="btn-danger" onclick="delP(${p.id})">削除</button>
+                    </div>
+                </div>`; 
+            }); 
+            h+='</div>'; container.innerHTML+=h; 
+        });
+    }
+
+    // 商品操作
+    window.addProduct = () => { 
+        const cat=document.getElementById('new-category').value, name=document.getElementById('new-name').value, price=parseInt(document.getElementById('new-price').value); 
+        if(!cat||!name||isNaN(price)){ showMessage("必須項目を入力してください", "error"); return; } 
+        const p={id:Date.now(), page:currentSettingsTab, category:cat, name:name, price:price, recovery:document.getElementById('new-recovery').value, notes:document.getElementById('new-notes').value}; 
+        products.push(p); markAsUnsaved(); renderSettings(); 
+    };
+    window.delP = id => { 
+        showConfirm("削除しますか？", r => { if(r){ products=products.filter(p=>p.id!==id); markAsUnsaved(); renderSettings(); }}); 
+    };
+    window.editProduct = id => {
+        const p = products.find(i => i.id === id); if(!p) return;
+        editingId = id;
+        document.getElementById('edit-category').value = p.category;
+        document.getElementById('edit-name').value = p.name;
+        document.getElementById('edit-price').value = p.price;
+        document.getElementById('edit-recovery').value = p.recovery || '';
+        document.getElementById('edit-notes').value = p.notes || '';
+        document.getElementById('edit-modal').style.display = 'flex';
+    };
+    window.closeEditModal = () => { document.getElementById('edit-modal').style.display = 'none'; editingId = null; };
+    window.saveEdit = () => {
+        const index = products.findIndex(p => p.id === editingId);
+        if(index !== -1) {
+            products[index] = { ...products[index], 
+                category: document.getElementById('edit-category').value,
+                name: document.getElementById('edit-name').value,
+                price: parseInt(document.getElementById('edit-price').value),
+                recovery: document.getElementById('edit-recovery').value,
+                notes: document.getElementById('edit-notes').value
+            };
+            markAsUnsaved(); renderSettings(); closeEditModal(); showMessage("適用完了", "success");
+        }
+    };
+    window.restoreDefaultProducts = () => { 
+        showConfirm("初期状態に戻しますか？(クラウドも上書きされます)", async r => { 
+            if(r){ 
+                products=JSON.parse(JSON.stringify(defaultProducts)); 
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products}); 
+                hasUnsavedChanges=false; renderSettings(); showMessage("初期化完了", "success"); 
+            }
+        }); 
+    };
+
+    function markAsUnsaved() { hasUnsavedChanges=true; document.getElementById('unsaved-warning').style.display='inline'; }
+    function showMessage(m,t){ const b=document.getElementById('message-box'); b.textContent=m; b.style.background=t==='error'?'#dc3545':'#28a745'; b.style.display='block'; b.style.opacity='1'; setTimeout(()=>{b.style.opacity='0';setTimeout(()=>b.style.display='none',300);},2000); }
+    window.showConfirm = (m,c) => { document.getElementById('confirm-msg').textContent=m; document.getElementById('confirm-modal').style.display='flex'; confirmCallback=c; };
+    window.closeConfirm = r => { document.getElementById('confirm-modal').style.display='none'; if(confirmCallback)confirmCallback(r); };
+</script>
+</body>
+</html>
