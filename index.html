@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>販売計算ツール | ChillSmoke</title>
+<title>販売計算ツール | GMC Chill Smoke v2</title>
 <style>
     :root {
         --primary: #1e293b;
@@ -23,8 +23,8 @@
         --makanai-border: #fef3c7;
         --makanai-text: #92400e;
         --muted: #64748b;
-        --header-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        --card-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        --header-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
 
     [data-theme="dark"] {
@@ -42,7 +42,7 @@
         --muted: #94a3b8;
     }
 
-    /* ズレ防止 */
+    /* ズレ防止 & 固定ヘッダー用設定 */
     html { overflow-y: scroll; scroll-behavior: smooth; }
 
     body { 
@@ -53,7 +53,6 @@
         transition: background-color 0.3s, color 0.3s;
     }
 
-    /* フェードインアニメーション */
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -62,14 +61,23 @@
 
     .container { max-width: 850px; margin: 0 auto; padding: 0 20px; box-sizing: border-box; }
     
+    /* 固定ヘッダーのスタイリング強化 */
     .sticky-wrapper { 
-        position: sticky; top: 0; background-color: var(--bg); z-index: 100; 
-        padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 25px;
-        backdrop-filter: blur(8px);
+        position: sticky; 
+        top: 0; 
+        background-color: rgba(var(--bg-rgb, 15, 23, 42), 0.9); /* テーマに合わせてJSで調整 */
+        z-index: 1000; 
+        padding: 10px 0 15px 0; 
+        border-bottom: 2px solid var(--border); 
+        margin-bottom: 25px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
     }
+    [data-theme="dark"] .sticky-wrapper { background-color: rgba(15, 23, 42, 0.9); }
+    [data-theme="light"] .sticky-wrapper { background-color: rgba(248, 250, 252, 0.9); }
 
     .tabs { 
-        display: flex; gap: 8px; margin-bottom: 15px; background: var(--tab-bg);
+        display: flex; gap: 8px; margin-bottom: 12px; background: var(--tab-bg);
         padding: 4px; border-radius: 12px; width: 100%; box-sizing: border-box;
     }
     .tab-btn { 
@@ -78,12 +86,13 @@
         border: none; font-size: 0.9em; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
     }
     .tab-btn:hover:not(.active) { background: var(--tab-hover); color: var(--primary); }
-    .tab-btn.active { background: var(--card-bg); color: var(--accent-solid); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    .tab-btn.active { background: var(--card-bg); color: var(--accent-solid); box-shadow: var(--card-shadow); }
     
     .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; width: 100%; }
     .header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .header-right { display: flex; gap: 10px; }
-    h1 { margin: 0; font-size: 1.4em; font-weight: 800; letter-spacing: -0.02em; background: var(--accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    
+    h1 { margin: 0; font-size: 1.3em; font-weight: 800; letter-spacing: -0.02em; background: var(--accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
     button { 
         cursor: pointer; padding: 10px 18px; border: none; border-radius: 10px; 
@@ -107,23 +116,38 @@
     .btn-order { background: var(--tab-bg); color: var(--primary); padding: 5px 10px; font-size: 0.8em; border: 1px solid var(--border); border-radius: 6px; }
     .btn-order:disabled { opacity: 0.2; cursor: default; transform: none; box-shadow: none; }
 
-    .total-display { 
-        display: flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 8px 20px; 
-        border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--header-shadow); 
+    .search-container { width: 100%; margin-bottom: 12px; position: relative; }
+    .search-input {
+        width: 100%;
+        padding: 10px 12px 10px 40px;
+        border-radius: 10px;
+        border: 2px solid var(--border);
+        background: var(--card-bg);
+        color: var(--input-text);
+        font-size: 0.9em;
+        box-sizing: border-box;
+        transition: all 0.2s;
     }
-    .total-price { font-size: 1.6em; font-weight: 800; color: var(--accent-solid); }
+    .search-input:focus { border-color: var(--accent-solid); outline: none; }
+    .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+
+    .total-display { 
+        display: flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 6px 18px; 
+        border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); 
+    }
+    .total-price { font-size: 1.5em; font-weight: 800; color: var(--accent-solid); }
     
     .makanai-container { 
         display: flex; align-items: center; gap: 8px; font-weight: 700; background: var(--makanai-bg); 
-        color: var(--makanai-text); padding: 10px 16px; border-radius: 12px; cursor: pointer; border: 1px solid var(--makanai-border); font-size: 0.9em; 
+        color: var(--makanai-text); padding: 8px 14px; border-radius: 12px; cursor: pointer; border: 1px solid var(--makanai-border); font-size: 0.85em; 
     }
     
     .category-section { 
         margin-bottom: 30px; background: var(--card-bg); border: 1px solid var(--border); 
-        border-radius: 16px; padding: 20px; box-shadow: var(--card-shadow); box-sizing: border-box; 
+        border-radius: 16px; padding: 20px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05); box-sizing: border-box; 
     }
     .category-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--tab-bg); padding-bottom: 12px; margin-bottom: 18px; gap: 10px; }
-    .category-title { margin: 0; color: var(--primary); font-size: 1.2em; font-weight: 800; }
+    .category-title { margin: 0; color: var(--primary); font-size: 1.15em; font-weight: 800; }
     
     .product-row { 
         display: flex; justify-content: space-between; align-items: flex-end; padding: 16px 0; 
@@ -131,21 +155,20 @@
     }
     .product-row:last-child { border-bottom: none; }
     .product-info { flex: 1; min-width: 0; }
-    .product-name { font-size: 1.15em; font-weight: 700; margin-bottom: 6px; color: var(--primary); }
-    .product-meta { font-size: 0.9em; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .product-name { font-size: 1.1em; font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+    .product-meta { font-size: 0.85em; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     
     .product-controls { display: flex; align-items: center; gap: 6px; }
     .control-group { display: flex; gap: 4px; }
     
     .count-input { 
-        font-size: 1.3em; font-weight: 800; width: 85px; height: 42px; text-align: center; 
+        font-size: 1.25em; font-weight: 800; width: 80px; height: 42px; text-align: center; 
         border: 2px solid var(--border); border-radius: 10px; background: var(--input-bg); color: var(--input-text); box-sizing: border-box; 
         transition: border-color 0.2s;
     }
     .count-input:focus { border-color: var(--accent-solid); outline: none; }
-    .count-input::-webkit-outer-spin-button, .count-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     
-    .theme-toggle-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--primary); font-size: 1.2em; padding: 8px 14px; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .theme-toggle-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--primary); font-size: 1.1em; padding: 8px 12px; border-radius: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     
     #message-box { 
         position: fixed; top: 25px; right: 25px; padding: 15px 30px; border-radius: 12px; 
@@ -158,7 +181,7 @@
         background: var(--card-bg); padding: 35px; border-radius: 24px; min-width: 350px; max-width: 90%; 
         text-align: center; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); animation: fadeInUp 0.3s ease-out;
     }
-    .modal-content h3 { margin-top: 0; font-weight: 800; font-size: 1.4em; margin-bottom: 20px; }
+    .modal-content h3 { margin-top: 0; font-weight: 800; font-size: 1.3em; margin-bottom: 20px; }
     .modal-content input, .modal-content select { 
         width: 100%; padding: 12px; margin: 10px 0; background: var(--tab-bg); color: var(--input-text); 
         border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box; font-size: 1em; 
@@ -173,8 +196,9 @@
         .product-row { flex-direction: column; align-items: stretch; gap: 15px; }
         .product-controls { justify-content: space-between; width: 100%; }
         .count-input { flex: 1; min-width: 50px; }
-        .header { flex-direction: column; align-items: flex-start; }
-        .header-right { width: 100%; justify-content: flex-end; }
+        .header { flex-direction: column; align-items: stretch; gap: 15px; }
+        .header-right { justify-content: flex-end; }
+        .total-display { flex: 1; justify-content: space-between; }
     }
     
     .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--tab-bg); gap: 15px; border-radius: 12px; transition: background 0.2s; }
@@ -192,40 +216,52 @@
 <div id="loading-overlay"><div class="loader"></div><h3 style="font-weight:800; color:var(--muted)">Secure Cloud Syncing...</h3></div>
 
 <div class="container" id="main-app" style="display: none;">
-    <div class="sticky-wrapper">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <h1>CHILL SMOKE</h1>
-                <span id="cloud-status" style="font-size: 0.7em; color: var(--success); font-weight: 800; letter-spacing: 0.05em; background: var(--tab-bg); padding: 4px 10px; border-radius: 20px;">SYNCED</span>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button id="main-settings-btn" class="theme-toggle-btn" onclick="openSettingsPrompt()" title="設定">⚙️</button>
-                <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切り替え">🌙</button>
-            </div>
-        </div>
-        
-        <div class="tabs" id="main-tabs-area">
-            <button class="tab-btn active" onclick="switchTab('恒常商品')" id="tab-kojo">恒常商品</button>
-            <button class="tab-btn" onclick="switchTab('卸商品')" id="tab-oroshi">卸商品</button>
-        </div>
-        
-        <div class="header" id="header-actions">
-            <div id="calc-header-left" class="header-left">
-                <div class="total-display">
-                    <span style="font-weight:800; color:var(--muted); font-size:0.75em; letter-spacing:0.05em;">TOTAL</span> 
-                    <span class="total-price">¥<span id="grand-total">0</span></span>
-                    <button class="btn-success" onclick="copyResult()" style="margin-left:8px;">コピー</button>
+    <div class="sticky-wrapper" id="fixed-header">
+        <div class="container" style="padding: 0;">
+            <!-- タイトル行 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h1>GMC Chill Smoke v2</h1>
+                    <span id="cloud-status" style="font-size: 0.65em; color: var(--success); font-weight: 800; letter-spacing: 0.05em; background: var(--tab-bg); padding: 4px 10px; border-radius: 20px;">SYNCED</span>
                 </div>
-                <label id="makanai-label" class="makanai-container"><input type="checkbox" id="makanai-check" onchange="toggleMakanai()">まかない (40% OFF)</label>
+                <div style="display: flex; gap: 10px;">
+                    <button id="main-settings-btn" class="theme-toggle-btn" onclick="openSettingsPrompt()" title="設定">⚙️</button>
+                    <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切り替え">🌙</button>
+                </div>
             </div>
-            <div id="calc-header-right" class="header-right"><button class="btn-danger" onclick="resetAll()">全リセット</button></div>
             
-            <div id="settings-header-left" style="display:none; align-items: center; gap: 12px;">
-                <button class="btn-back" onclick="switchTab('恒常商品')">← 戻る</button>
-                <button class="btn-accent" onclick="openAddModal()">＋ 商品追加</button>
-                <span id="unsaved-warning" style="display:none; color:var(--danger); font-weight:800; font-size:0.8em; padding: 4px 12px; background: #fee2e2; border-radius: 8px;">UNSAVED</span>
+            <!-- 検索バー -->
+            <div class="search-container" id="search-area">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="search-query" placeholder="商品名、カテゴリで検索..." oninput="handleSearch(this.value)">
             </div>
-            <div id="settings-header-right" style="display:none;"><button class="btn-success" onclick="confirmSaveSettings()">💾 クラウド保存</button></div>
+
+            <!-- タブ切り替え -->
+            <div class="tabs" id="main-tabs-area">
+                <button class="tab-btn active" onclick="switchTab('恒常商品')" id="tab-kojo">恒常商品</button>
+                <button class="tab-btn" onclick="switchTab('卸商品')" id="tab-oroshi">卸商品</button>
+            </div>
+            
+            <!-- アクション・合計金額表示 -->
+            <div class="header" id="header-actions">
+                <div id="calc-header-left" class="header-left">
+                    <div class="total-display">
+                        <span style="font-weight:800; color:var(--muted); font-size:0.7em; letter-spacing:0.05em;">TOTAL</span> 
+                        <span class="total-price">¥<span id="grand-total">0</span></span>
+                        <button class="btn-success" onclick="copyResult()" style="margin-left:8px; padding: 6px 12px; font-size: 0.85em;">コピー</button>
+                    </div>
+                    <label id="makanai-label" class="makanai-container"><input type="checkbox" id="makanai-check" onchange="toggleMakanai()">まかない割</label>
+                    <button id="btn-custom-item" class="btn-accent" style="background: var(--accent); padding: 8px 14px;" onclick="openCustomItemModal()">＋ 自由入力</button>
+                </div>
+                <div id="calc-header-right" class="header-right"><button class="btn-danger" onclick="resetAll()" style="padding: 8px 14px;">全リセット</button></div>
+                
+                <div id="settings-header-left" style="display:none; align-items: center; gap: 12px;">
+                    <button class="btn-back" onclick="switchTab('恒常商品')">← 戻る</button>
+                    <button class="btn-accent" onclick="openAddModal()">＋ 商品追加</button>
+                    <span id="unsaved-warning" style="display:none; color:var(--danger); font-weight:800; font-size:0.75em; padding: 4px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">UNSAVED</span>
+                </div>
+                <div id="settings-header-right" style="display:none;"><button class="btn-success" onclick="confirmSaveSettings()">💾 クラウド保存</button></div>
+            </div>
         </div>
     </div>
     
@@ -237,7 +273,7 @@
             <button class="tab-btn" onclick="switchSettingsTab('卸商品')" id="settings-tab-oroshi">卸設定</button>
         </div>
         <div id="settings-list-container" class="view-container"></div>
-        <div style="margin-top:30px; text-align:center;"><button class="btn-warning" onclick="restoreDefaultProducts()" style="opacity:0.6">初期データへ復元 (注意)</button></div>
+        <div style="margin-top:30px; text-align:center;"><button class="btn-warning" onclick="restoreDefaultProducts()" style="opacity:0.4; font-size: 0.8em;">初期データへ復帰</button></div>
     </div>
 </div>
 
@@ -259,11 +295,11 @@
 <!-- 確認モーダル -->
 <div id="confirm-modal" class="modal-overlay">
     <div class="modal-content">
-        <h3 id="confirm-title" style="margin-bottom:10px;">CONFIRMATION</h3>
-        <p id="confirm-msg" style="white-space:pre-wrap; color:var(--muted);"></p>
-        <div style="margin-top:25px; display:flex; justify-content:center; gap:12px;">
+        <h3 id="confirm-title">CONFIRMATION</h3>
+        <p id="confirm-msg" style="white-space:pre-wrap; color:var(--muted); margin: 20px 0;"></p>
+        <div style="display:flex; justify-content:center; gap:12px;">
             <button onclick="closeConfirm(false)" class="btn-back">いいえ</button>
-            <button class="btn-danger" onclick="closeConfirm(true)">はい、実行します</button>
+            <button class="btn-danger" onclick="closeConfirm(true)">はい</button>
         </div>
     </div>
 </div>
@@ -272,20 +308,16 @@
 <div id="edit-modal" class="modal-overlay">
     <div class="modal-content">
         <h3 id="modal-title">PRODUCT EDIT</h3>
-        
         <label>PAGE</label>
         <select id="edit-page" onchange="updateCategoryList()">
             <option value="恒常商品">恒常商品</option>
             <option value="卸商品">卸商品</option>
         </select>
-
         <label id="category-label">CATEGORY / SHOP</label>
         <select id="edit-category-select" onchange="handleCategorySelect(this.value)"></select>
         <input type="text" id="edit-category-manual" placeholder="新規カテゴリ名を入力" style="display:none;">
-        
         <label>PRODUCT NAME</label>
         <input type="text" id="edit-name" placeholder="商品名">
-        
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
             <div>
                 <label>PRICE (¥)</label>
@@ -296,13 +328,27 @@
                 <input type="number" id="edit-recovery" placeholder="0">
             </div>
         </div>
-        
         <label>NOTES</label>
         <input type="text" id="edit-notes" placeholder="備考">
-        
         <div style="margin-top:30px; display:flex; justify-content:center; gap:12px;">
             <button onclick="closeEditModal()" class="btn-back">キャンセル</button>
-            <button class="btn-accent" id="btn-modal-save" onclick="saveProduct()">保存して適用</button>
+            <button class="btn-accent" id="btn-modal-save" onclick="saveProduct()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 自由入力（カスタム商品）モーダル -->
+<div id="custom-item-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 style="background: var(--accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CUSTOM ITEM</h3>
+        <p style="color:var(--muted); font-size:0.9em;">今回限りの会計項目を追加します</p>
+        <label>ITEM NAME</label>
+        <input type="text" id="custom-item-name" placeholder="例: 月限定商品">
+        <label>PRICE (¥)</label>
+        <input type="number" id="custom-item-price" placeholder="50000">
+        <div style="margin-top:30px; display:flex; justify-content:center; gap:12px;">
+            <button onclick="closeCustomItemModal()" class="btn-back">CANCEL</button>
+            <button class="btn-accent" onclick="addCustomItem()">追加する</button>
         </div>
     </div>
 </div>
@@ -340,11 +386,10 @@
     const db = getFirestore(app);
     const appId = 'chill-smoke-app-v1';
 
-    let user=null, products=[], localCounts={}, currentTab='恒常商品', currentSettingsTab='恒常商品', isMakanai=false, hasUnsavedChanges=false, confirmCallback=null, editingId=null, isLoggedIn=false, oldCatNameForRename = null;
+    let user=null, products=[], localCounts={}, customItems=[], currentTab='恒常商品', currentSettingsTab='恒常商品', isMakanai=false, hasUnsavedChanges=false, confirmCallback=null, editingId=null, isLoggedIn=false, oldCatNameForRename = null, searchQuery = "";
 
-    // 商品初期値データ（更新版）
+    // 商品初期値
     const defaultProducts = [
-        // --- 恒常商品 ---
         { id: 101, page: "恒常商品", category: "マルコポーロシリーズ", name: "レッド", price: 100000, recovery: "10", notes: "1箱10本入り" },
         { id: 102, page: "恒常商品", category: "マルコポーロシリーズ", name: "グリーン", price: 200000, recovery: "20", notes: "1箱10本入り" },
         { id: 103, page: "恒常商品", category: "マルコポーロシリーズ", name: "ゴールド", price: 300000, recovery: "30", notes: "1箱10本入り" },
@@ -364,7 +409,6 @@
         { id: 117, page: "恒常商品", category: "ギフト用", name: "Pure White", price: 1000000, recovery: "50", notes: "" },
         { id: 118, page: "恒常商品", category: "その他（特殊商品）", name: "ENFORCER（単品）", price: 50000, recovery: "40", notes: "PDのみ購入可能" },
         { id: 119, page: "恒常商品", category: "その他（特殊商品）", name: "cute milky", price: 300000, recovery: "30", notes: "姫宮みくる、兎水もも限定販売" },
-        // --- 卸商品 ---
         { id: 201, page: "卸商品", category: "リッパーDOC.", name: "抑制剤", price: 300000, recovery: "0", notes: "" },
         { id: 202, page: "卸商品", category: "ZENTU", name: "777", price: 200000, recovery: "0", notes: "" },
         { id: 203, page: "卸商品", category: "Acta Diurna(新聞社)", name: "BLACK INK", price: 600000, recovery: "0", notes: "" },
@@ -432,16 +476,23 @@
         const isSettings = (t === '設定');
         document.getElementById('main-tabs-area').style.display = isSettings ? 'none' : 'flex';
         document.getElementById('main-settings-btn').style.display = isSettings ? 'none' : 'block';
+        document.getElementById('search-area').style.display = isSettings ? 'none' : 'block';
+
         document.querySelectorAll('.sticky-wrapper .tabs .tab-btn').forEach(b=>b.classList.remove('active')); 
         if(t==='恒常商品')document.getElementById('tab-kojo').classList.add('active'); 
         if(t==='卸商品')document.getElementById('tab-oroshi').classList.add('active');
+        
         document.getElementById('calc-view').style.display = isSettings ? 'none' : 'block'; 
         document.getElementById('settings-view').style.display = isSettings ? 'block' : 'none';
+        
         document.getElementById('calc-header-left').style.display = isSettings ? 'none' : 'flex'; 
         document.getElementById('calc-header-right').style.display = isSettings ? 'none' : 'flex';
         document.getElementById('settings-header-left').style.display = isSettings ? 'flex' : 'none'; 
         document.getElementById('settings-header-right').style.display = isSettings ? 'flex' : 'none';
+        
         document.getElementById('makanai-label').style.display = (t==='恒常商品') ? 'flex' : 'none';
+        document.getElementById('btn-custom-item').style.display = (t==='恒常商品' && !isSettings) ? 'block' : 'none';
+
         if(isSettings) renderSettings(); else renderCalc();
         window.scrollTo(0,0);
     }
@@ -473,63 +524,81 @@
         }});
     };
 
+    window.handleSearch = (query) => {
+        searchQuery = query.toLowerCase();
+        renderCalc();
+    };
+
+    window.openCustomItemModal = () => {
+        document.getElementById('custom-item-name').value = "";
+        document.getElementById('custom-item-price').value = "";
+        document.getElementById('custom-item-modal').style.display = 'flex';
+        setTimeout(() => document.getElementById('custom-item-price').focus(), 100);
+    };
+    window.closeCustomItemModal = () => document.getElementById('custom-item-modal').style.display = 'none';
+    window.addCustomItem = () => {
+        let name = document.getElementById('custom-item-name').value.trim();
+        const price = parseInt(document.getElementById('custom-item-price').value);
+        if(isNaN(price)) { showMessage("価格を入力してください", "error"); return; }
+        if(!name) name = "月限定商品";
+        const id = "custom_" + Date.now();
+        customItems.push({ id, name, price });
+        localCounts[id] = 1;
+        closeCustomItemModal();
+        renderCalc();
+        showMessage("ADDED", "success");
+    };
+    window.removeCustomItem = (id) => {
+        customItems = customItems.filter(i => i.id !== id);
+        delete localCounts[id];
+        renderCalc();
+    };
+
     window.changeCount = (id, a) => { 
         localCounts[id]=(localCounts[id]||0)+a; 
         if(localCounts[id]<0)localCounts[id]=0; 
-        document.getElementById(`count-${id}`).value=localCounts[id]; 
+        const input = document.getElementById(`count-${id}`);
+        if(input) input.value=localCounts[id]; 
         updateTotal(); 
     };
     window.updateCountDirectly = (id, v) => { 
-        let n = parseInt(v); 
-        if(isNaN(n)||n<0)n=0; 
-        localCounts[id]=n; 
-        updateTotal(); 
+        let n = parseInt(v); if(isNaN(n)||n<0)n=0; localCounts[id]=n; updateTotal(); 
     };
     window.resetAll = () => { 
-        showConfirm("現在の注文内容をすべてクリアしますか？", r=>{if(r){products.forEach(p=>{if(p.page===currentTab)localCounts[p.id]=0;});renderCalc();}}); 
+        showConfirm("注文をクリアしますか？", r=>{if(r){localCounts = {}; customItems = []; renderCalc();}}); 
     };
     window.toggleMakanai = () => { isMakanai=document.getElementById('makanai-check').checked; renderCalc(); };
+    
     function updateTotal(){ 
         let t=0; 
-        products.forEach(p=>{ 
-            if(p.page===currentTab){ 
-                let c=localCounts[p.id]||0, pr=p.price; 
-                if(currentTab==='恒常商品'&&isMakanai)pr=Math.floor(pr*0.6); 
-                t+=pr*c; 
-            }
-        }); 
+        products.forEach(p=>{ if(p.page===currentTab){ let c=localCounts[p.id]||0, pr=p.price; if(currentTab==='恒常商品'&&isMakanai)pr=Math.floor(pr*0.6); t+=pr*c; }}); 
+        if (currentTab === '恒常商品') { customItems.forEach(i => { t += i.price * (localCounts[i.id] || 0); }); }
         document.getElementById('grand-total').textContent=t.toLocaleString(); 
     }
 
     window.copyResult = () => { 
-        let t=0; 
-        products.forEach(p=>{ 
-            if(p.page===currentTab){ 
-                let c=localCounts[p.id]||0, pr=p.price; 
-                if(currentTab==='恒常商品'&&isMakanai)pr=Math.floor(pr*0.6); 
-                t+=pr*c; 
-            }
-        }); 
-        if(t===0){showMessage("商品が選択されていません","error");return;} 
-        const tx=document.createElement('textarea'); 
-        tx.value=t.toString(); 
-        document.body.appendChild(tx); 
-        tx.select(); 
-        document.execCommand('copy'); 
-        document.body.removeChild(tx); 
-        showMessage("COPIED", "success"); 
+        let t=0; products.forEach(p=>{ if(p.page===currentTab){ let c=localCounts[p.id]||0, pr=p.price; if(currentTab==='恒常商品'&&isMakanai)pr=Math.floor(pr*0.6); t+=pr*c; }}); 
+        if (currentTab === '恒常商品') { customItems.forEach(i => { t += i.price * (localCounts[i.id] || 0); }); }
+        if(t===0){showMessage("EMPTY","error");return;} 
+        const tx=document.createElement('textarea'); tx.value=t.toString(); document.body.appendChild(tx); tx.select(); document.execCommand('copy'); document.body.removeChild(tx); showMessage("COPIED", "success"); 
     };
 
     function renderCalc(){ 
-        const container=document.getElementById('categories-container'); 
-        container.innerHTML=''; 
-        const ps=products.filter(p=>p.page===currentTab); 
+        const container=document.getElementById('categories-container'); container.innerHTML=''; 
+        if (currentTab === '恒常商品' && customItems.length > 0) {
+            let h = `<div class="category-section" style="border-color: var(--accent-solid);"><h2 class="category-title" style="color: var(--accent-solid);">✨ CUSTOM ITEMS</h2>`;
+            customItems.forEach(i => {
+                h += `<div class="product-row"><div class="product-info"><div class="product-name">${i.name} <button onclick="removeCustomItem('${i.id}')" style="background:transparent; color:var(--danger); padding:0 5px; font-size:0.75em; opacity:0.8;">(削除)</button></div><div class="product-meta"><span style="color:var(--accent-solid); font-weight:800;">¥${i.price.toLocaleString()}</span></div></div>
+                    <div class="product-controls"><input type="number" class="count-input" id="count-${i.id}" value="${localCounts[i.id]||0}" onchange="updateCountDirectly('${i.id}',this.value)"><div class="control-group"><button class="btn-calc" onclick="changeCount('${i.id}',1)">+</button></div></div></div>`;
+            });
+            h += '</div>'; container.innerHTML += h;
+        }
+        const ps = products.filter(p => (p.page === currentTab && (p.name.toLowerCase().includes(searchQuery) || p.category.toLowerCase().includes(searchQuery))));
         const cats=[...new Set(ps.map(p=>p.category))];
         cats.forEach(cat=>{ 
             const cps=ps.filter(p=>p.category===cat); 
             let h=`<div class="category-section"><h2 class="category-title">${cat}</h2>`; cps.forEach(p=>{ 
-                let rec = p.recovery || '';
-                let prDisp=`¥${p.price.toLocaleString()}`; if(currentTab==='恒常商品'&&isMakanai)prDisp=`<span style="text-decoration:line-through; font-size:0.8em; opacity:0.6;">¥${p.price.toLocaleString()}</span> ¥${Math.floor(p.price*0.6).toLocaleString()}`;
+                let rec = p.recovery || ''; let prDisp=`¥${p.price.toLocaleString()}`; if(currentTab==='恒常商品'&&isMakanai)prDisp=`<span style="text-decoration:line-through; font-size:0.8em; opacity:0.6;">¥${p.price.toLocaleString()}</span> ¥${Math.floor(p.price*0.6).toLocaleString()}`;
                 h+=`<div class="product-row"><div class="product-info"><div class="product-name">${p.name}</div><div class="product-meta"><span style="color:var(--accent-solid); font-weight:800; min-width:85px;">${prDisp}</span><span>${rec && rec !== '0' ?'回復量:'+rec+'%':''}</span><span style="color:var(--muted); font-size:0.85em;">${p.notes?p.notes:''}</span></div></div>
                 <div class="product-controls"><div class="control-group"><button class="btn-calc" onclick="changeCount(${p.id},-100)">-100</button><button class="btn-calc" onclick="changeCount(${p.id},-10)">-10</button><button class="btn-calc" onclick="changeCount(${p.id},-1)">-</button></div>
                 <input type="number" class="count-input" id="count-${p.id}" value="${localCounts[p.id]||0}" onchange="updateCountDirectly(${p.id},this.value)">
@@ -539,173 +608,56 @@
         updateTotal(); 
     }
 
-    window.switchSettingsTab = t => { 
-        currentSettingsTab=t; 
-        document.querySelectorAll('#settings-view .tabs .tab-btn').forEach(b=>b.classList.remove('active')); 
-        if(t==='恒常商品')document.getElementById('settings-tab-kojo').classList.add('active'); 
-        else document.getElementById('settings-tab-oroshi').classList.add('active'); 
-        renderSettings(); 
-    };
-
+    window.switchSettingsTab = t => { currentSettingsTab=t; document.querySelectorAll('#settings-view .tabs .tab-btn').forEach(b=>b.classList.remove('active')); if(t==='恒常商品')document.getElementById('settings-tab-kojo').classList.add('active'); else document.getElementById('settings-tab-oroshi').classList.add('active'); renderSettings(); };
     function renderSettings(){ 
-        const c=document.getElementById('settings-list-container'); c.innerHTML=''; 
-        const ps=products.filter(p=>p.page===currentSettingsTab); 
-        const cats=[...new Set(ps.map(p=>p.category))];
+        const c=document.getElementById('settings-list-container'); c.innerHTML=''; const ps=products.filter(p=>p.page===currentSettingsTab); const cats=[...new Set(ps.map(p=>p.category))];
         cats.forEach((cat, cIdx)=>{ 
-            let h=`<div class="category-section">
-                <div class="category-header">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <h3 class="category-title">${cat}</h3>
-                        <button class="btn-order" style="padding:2px 6px; font-size:0.7em;" onclick="openCatRenameModal('${cat}')">✎</button>
-                    </div>
-                    <div class="header-right">
-                        <button class="btn-success" style="padding:6px 12px; font-size:0.75em;" onclick="openAddModal('${currentSettingsTab}', '${cat}')">追加</button>
-                        <button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', -1)" ${cIdx === 0 ? 'disabled' : ''}>▲</button>
-                        <button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', 1)" ${cIdx === cats.length - 1 ? 'disabled' : ''}>▼</button>
-                    </div>
-                </div>`; 
-            const catPs = ps.filter(p=>p.category===cat);
-            catPs.forEach((p, pIdx)=>{ 
-                h+=`<div class="settings-item">
-                    <div class="settings-info">
-                        <strong>${p.name}</strong>
-                        <div style="font-size:0.85em; color:var(--muted);">¥${p.price.toLocaleString()} ${p.recovery && p.recovery !== '0' ? '/ 回復量: ' + p.recovery + '%' : ''}</div>
-                        <div style="font-size:0.75em; color:var(--muted); opacity:0.8;">${p.notes || ''}</div>
-                    </div>
-                    <div class="settings-actions">
-                        <div class="settings-main-btns">
-                            <button class="btn-accent" style="padding:6px 12px; font-size:0.75em;" onclick="editProduct(${p.id})">編集</button>
-                            <button class="btn-danger" style="padding:6px 12px; font-size:0.75em;" onclick="delP(${p.id})">削除</button>
-                        </div>
-                        <div class="settings-order-btns">
-                            <button class="btn-order" style="padding:2px 8px;" onclick="moveProduct(${p.id}, -1)" ${pIdx === 0 ? 'disabled' : ''}>▲</button>
-                            <button class="btn-order" style="padding:2px 8px;" onclick="moveProduct(${p.id}, 1)" ${pIdx === catPs.length - 1 ? 'disabled' : ''}>▼</button>
-                        </div>
-                    </div>
-                </div>`; 
-            }); 
-            h+='</div>'; c.innerHTML+=h; 
+            let h=`<div class="category-section"><div class="category-header"><div style="display:flex; align-items:center; gap:8px;"><h3 class="category-title">${cat}</h3><button class="btn-order" style="padding:2px 6px; font-size:0.7em;" onclick="openCatRenameModal('${cat}')">✎</button></div><div class="header-right"><button class="btn-success" style="padding:6px 12px; font-size:0.75em;" onclick="openAddModal('${currentSettingsTab}', '${cat}')">追加</button><button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', -1)" ${cIdx === 0 ? 'disabled' : ''}>▲</button><button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', 1)" ${cIdx === cats.length - 1 ? 'disabled' : ''}>▼</button></div></div>`; 
+            const catPs = ps.filter(p=>p.category===cat); catPs.forEach((p, pIdx)=>{ 
+                h+=`<div class="settings-item"><div class="settings-info"><strong>${p.name}</strong><div style="font-size:0.85em; color:var(--muted);">¥${p.price.toLocaleString()} ${p.recovery && p.recovery !== '0' ? '/ 回復量: ' + p.recovery + '%' : ''}</div><div style="font-size:0.75em; color:var(--muted); opacity:0.8;">${p.notes || ''}</div></div><div class="settings-actions"><div class="settings-main-btns"><button class="btn-accent" style="padding:6px 12px; font-size:0.75em;" onclick="editProduct(${p.id})">編集</button><button class="btn-danger" style="padding:6px 12px; font-size:0.75em;" onclick="delP(${p.id})">削除</button></div><div class="settings-order-btns"><button class="btn-order" style="padding:2px 8px;" onclick="moveProduct(${p.id}, -1)" ${pIdx === 0 ? 'disabled' : ''}>▲</button><button class="btn-order" style="padding:2px 8px;" onclick="moveProduct(${p.id}, 1)" ${pIdx === catPs.length - 1 ? 'disabled' : ''}>▼</button></div></div></div>`; 
+            }); h+='</div>'; c.innerHTML+=h; 
         });
     }
 
-    // カテゴリ名称変更
-    window.openCatRenameModal = (oldName) => {
-        oldCatNameForRename = oldName;
-        document.getElementById('cat-rename-input').value = oldName;
-        document.getElementById('cat-edit-modal').style.display = 'flex';
-    };
+    window.openCatRenameModal = (oldName) => { oldCatNameForRename = oldName; document.getElementById('cat-rename-input').value = oldName; document.getElementById('cat-edit-modal').style.display = 'flex'; };
     window.closeCatModal = () => { document.getElementById('cat-edit-modal').style.display = 'none'; };
     window.saveCategoryRename = () => {
-        const newName = document.getElementById('cat-rename-input').value.trim();
-        if(!newName || newName === oldCatNameForRename) { closeCatModal(); return; }
-        
-        products.forEach(p => {
-            if(p.page === currentSettingsTab && p.category === oldCatNameForRename) {
-                p.category = newName;
-            }
-        });
-        markAsUnsaved();
-        renderSettings();
-        closeCatModal();
-        showMessage("CATEGORY RENAMED", "success");
+        const newName = document.getElementById('cat-rename-input').value.trim(); if(!newName || newName === oldCatNameForRename) { closeCatModal(); return; }
+        products.forEach(p => { if(p.page === currentSettingsTab && p.category === oldCatNameForRename) p.category = newName; }); markAsUnsaved(); renderSettings(); closeCatModal(); showMessage("RENAMED", "success");
     };
 
     window.moveCategory = (page, targetCat, direction) => {
-        const ps = products.filter(p => p.page === page);
-        const otherPs = products.filter(p => p.page !== page);
-        const cats = [...new Set(ps.map(p => p.category))];
-        const idx = cats.indexOf(targetCat);
-        const newIdx = idx + direction;
-        if (newIdx < 0 || newIdx >= cats.length) return;
-        [cats[idx], cats[newIdx]] = [cats[newIdx], cats[idx]];
-        const reorderedPs = [];
-        cats.forEach(c => reorderedPs.push(...ps.filter(p => p.category === c)));
-        products = [...otherPs, ...reorderedPs];
-        markAsUnsaved(); renderSettings();
+        const ps = products.filter(p => p.page === page); const otherPs = products.filter(p => p.page !== page); const cats = [...new Set(ps.map(p => p.category))]; const idx = cats.indexOf(targetCat); const newIdx = idx + direction; if (newIdx < 0 || newIdx >= cats.length) return; [cats[idx], cats[newIdx]] = [cats[newIdx], cats[idx]]; const reorderedPs = []; cats.forEach(c => reorderedPs.push(...ps.filter(p => p.category === c))); products = [...otherPs, ...reorderedPs]; markAsUnsaved(); renderSettings();
     };
 
     window.moveProduct = (id, direction) => {
-        const idx = products.findIndex(p => p.id === id);
-        if (idx === -1) return;
-        const target = products[idx];
-        const sameCatPs = products.filter(p => p.page === target.page && p.category === target.category);
-        const pIdxInCat = sameCatPs.findIndex(p => p.id === id);
-        const newPIdxInCat = pIdxInCat + direction;
-        if (newPIdxInCat < 0 || newPIdxInCat >= sameCatPs.length) return;
-        const neighbor = sameCatPs[newPIdxInCat];
-        const neighborIdx = products.findIndex(p => p.id === neighbor.id);
-        [products[idx], products[neighborIdx]] = [products[neighborIdx], products[idx]];
-        markAsUnsaved(); renderSettings();
+        const idx = products.findIndex(p => p.id === id); if (idx === -1) return; const target = products[idx]; const sameCatPs = products.filter(p => p.page === target.page && p.category === target.category); const pIdxInCat = sameCatPs.findIndex(p => p.id === id); const newPIdxInCat = pIdxInCat + direction; if (newPIdxInCat < 0 || newPIdxInCat >= sameCatPs.length) return; const neighbor = sameCatPs[newPIdxInCat]; const neighborIdx = products.findIndex(p => p.id === neighbor.id); [products[idx], products[neighborIdx]] = [neighborIdx === -1 ? products[idx] : products[neighborIdx], products[neighborIdx] === -1 ? products[idx] : products[idx]]; // Correcting swap logic
+        // Simplified swap logic for the entire array
+        const reordered = [...products];
+        const nIndex = products.findIndex(p => p.id === neighbor.id);
+        const temp = reordered[idx]; reordered[idx] = reordered[nIndex]; reordered[nIndex] = temp;
+        products = reordered; markAsUnsaved(); renderSettings();
     };
 
     window.updateCategoryList = (preSelectedCat = null) => {
-        const selectedPage = document.getElementById('edit-page').value;
-        const select = document.getElementById('edit-category-select');
-        const cats = [...new Set(products.filter(p => p.page === selectedPage).map(p => p.category))];
-        select.innerHTML = '<option value="">▼ 既存カテゴリから選択</option>';
-        cats.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
-        select.innerHTML += '<option value="__NEW__">＋ 新規カテゴリを作成</option>';
-        if (preSelectedCat && cats.includes(preSelectedCat)) { select.value = preSelectedCat; handleCategorySelect(preSelectedCat); }
-        else if (preSelectedCat) { select.value = "__NEW__"; handleCategorySelect("__NEW__"); document.getElementById('edit-category-manual').value = preSelectedCat; }
-        else { select.value = ""; handleCategorySelect(""); }
+        const selectedPage = document.getElementById('edit-page').value; const select = document.getElementById('edit-category-select'); const cats = [...new Set(products.filter(p => p.page === selectedPage).map(p => p.category))];
+        select.innerHTML = '<option value="">▼ 既存カテゴリから選択</option>'; cats.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`); select.innerHTML += '<option value="__NEW__">＋ 新規カテゴリを作成</option>';
+        if (preSelectedCat && cats.includes(preSelectedCat)) { select.value = preSelectedCat; handleCategorySelect(preSelectedCat); } else if (preSelectedCat) { select.value = "__NEW__"; handleCategorySelect("__NEW__"); document.getElementById('edit-category-manual').value = preSelectedCat; } else { select.value = ""; handleCategorySelect(""); }
     };
 
-    window.handleCategorySelect = (val) => {
-        const manualInput = document.getElementById('edit-category-manual');
-        if (val === "__NEW__") { manualInput.style.display = 'block'; manualInput.value = ""; }
-        else { manualInput.style.display = 'none'; manualInput.value = val; }
-    };
-
-    window.openAddModal = (page = null, category = null) => {
-        editingId = null;
-        document.getElementById('modal-title').textContent = "NEW PRODUCT";
-        document.getElementById('edit-page').value = page || currentSettingsTab;
-        updateCategoryList(category);
-        document.getElementById('edit-name').value = "";
-        document.getElementById('edit-price').value = "";
-        document.getElementById('edit-recovery').value = "";
-        document.getElementById('edit-notes').value = "";
-        document.getElementById('btn-modal-save').textContent = "REGISTER";
-        document.getElementById('edit-modal').style.display = 'flex';
-    };
-
-    window.editProduct = id => {
-        const p = products.find(i => i.id === id); if(!p) return;
-        editingId = id;
-        document.getElementById('modal-title').textContent = "EDIT PRODUCT";
-        document.getElementById('edit-page').value = p.page;
-        updateCategoryList(p.category);
-        document.getElementById('edit-name').value = p.name;
-        document.getElementById('edit-price').value = p.price;
-        document.getElementById('edit-recovery').value = p.recovery || '';
-        document.getElementById('edit-notes').value = p.notes || '';
-        document.getElementById('btn-modal-save').textContent = "UPDATE";
-        document.getElementById('edit-modal').style.display = 'flex';
-    };
-
-    window.saveProduct = () => {
-        const page = document.getElementById('edit-page').value;
-        const cat = document.getElementById('edit-category-manual').value.trim();
-        const name = document.getElementById('edit-name').value.trim();
-        const price = parseInt(document.getElementById('edit-price').value);
-        if(!cat || !name || isNaN(price)){ showMessage("REQUIRED FIELDS MISSING", "error"); return; }
+    window.handleCategorySelect = (val) => { const manualInput = document.getElementById('edit-category-manual'); if (val === "__NEW__") { manualInput.style.display = 'block'; manualInput.value = ""; } else { manualInput.style.display = 'none'; manualInput.value = val; } };
+    window.openAddModal = (page = null, category = null) => { editingId = null; document.getElementById('modal-title').textContent = "NEW PRODUCT"; document.getElementById('edit-page').value = page || currentSettingsTab; updateCategoryList(category); document.getElementById('edit-name').value = ""; document.getElementById('edit-price').value = ""; document.getElementById('edit-recovery').value = ""; document.getElementById('edit-notes').value = ""; document.getElementById('btn-modal-save').textContent = "REGISTER"; document.getElementById('edit-modal').style.display = 'flex'; };
+    window.editProduct = id => { const p = products.find(i => i.id === id); if(!p) return; editingId = id; document.getElementById('modal-title').textContent = "EDIT PRODUCT"; document.getElementById('edit-page').value = p.page; updateCategoryList(p.category); document.getElementById('edit-name').value = p.name; document.getElementById('edit-price').value = p.price; document.getElementById('edit-recovery').value = p.recovery || ''; document.getElementById('edit-notes').value = p.notes || ''; document.getElementById('btn-modal-save').textContent = "UPDATE"; document.getElementById('edit-modal').style.display = 'flex'; };
+    window.saveProduct = () => { const page = document.getElementById('edit-page').value; const cat = document.getElementById('edit-category-manual').value.trim(); const name = document.getElementById('edit-name').value.trim(); const price = parseInt(document.getElementById('edit-price').value); if(!cat || !name || isNaN(price)){ showMessage("入力漏れがあります", "error"); return; }
         const productData = { page, category: cat, name, price, recovery: document.getElementById('edit-recovery').value, notes: document.getElementById('edit-notes').value };
-        if (editingId === null) { products.push({id: Date.now(), ...productData}); showMessage("ADDED SUCCESSFULLY", "success"); }
-        else { const index = products.findIndex(p => p.id === editingId); if(index !== -1) products[index] = { ...products[index], ...productData }; showMessage("UPDATED SUCCESSFULLY", "success"); }
+        if (editingId === null) { products.push({id: Date.now(), ...productData}); showMessage("ADDED", "success"); } else { const index = products.findIndex(p => p.id === editingId); if(index !== -1) products[index] = { ...products[index], ...productData }; showMessage("UPDATED", "success"); }
         markAsUnsaved(); renderSettings(); closeEditModal();
     };
 
     window.delP = id => { showConfirm("この商品を削除しますか？", r => { if(r){ products=products.filter(p=>p.id!==id); markAsUnsaved(); renderSettings(); }}); };
     window.closeEditModal = () => { document.getElementById('edit-modal').style.display = 'none'; editingId = null; };
-    
-    window.restoreDefaultProducts = () => { 
-        showConfirm("初期状態に戻しますか？(クラウドも上書きされます)", async r => { if(r){ 
-            products=JSON.parse(JSON.stringify(defaultProducts)); 
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products}); 
-            hasUnsavedChanges=false; renderSettings(); showMessage("RESET COMPLETED", "success"); 
-        }}); 
-    };
-
+    window.closePasswordModal = () => document.getElementById('password-modal').style.display='none';
+    window.restoreDefaultProducts = () => { showConfirm("初期状態に戻しますか？(クラウドも上書きされます)", async r => { if(r){ products=JSON.parse(JSON.stringify(defaultProducts)); await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products}); hasUnsavedChanges=false; renderSettings(); showMessage("RESET COMPLETED", "success"); }}); };
     function markAsUnsaved() { hasUnsavedChanges=true; document.getElementById('unsaved-warning').style.display='inline'; }
     function showMessage(m,t){ const b=document.getElementById('message-box'); b.textContent=m; b.style.background=t==='error'?'#ef4444':'#10b981'; b.style.display='block'; setTimeout(()=>{b.style.display='none';},2500); }
     window.showConfirm = (m,c) => { document.getElementById('confirm-msg').textContent=m; document.getElementById('confirm-modal').style.display='flex'; confirmCallback=c; };
