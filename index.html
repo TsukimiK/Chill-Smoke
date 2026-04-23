@@ -17,41 +17,161 @@
         --input-bg: #2c2c2c; --input-text: #e0e0e0; --tab-bg: #2c2c2c; --tab-hover: #3d3d3d;
         --makanai-bg: #3a2e0a; --makanai-border: #5c4d20; --makanai-text: #ffd54f; --muted: #aaa;
     }
-    body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif; background-color: var(--bg); color: var(--primary); margin: 0; padding: 0; line-height: 1.4; }
-    .container { max-width: 800px; margin: 0 auto; padding: 0 15px; }
+
+    /* レイアウトのガタつきを完全に防ぐ設定 */
+    html {
+        overflow-y: scroll;
+    }
+
+    body { 
+        font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif; 
+        background-color: var(--bg); 
+        color: var(--primary); 
+        margin: 0; 
+        padding: 0; 
+        line-height: 1.4; 
+        overflow-x: hidden;
+    }
+
+    .container { 
+        max-width: 800px; 
+        margin: 0 auto; 
+        padding: 0 15px; 
+        box-sizing: border-box; 
+    }
     
-    /* ヘッダー固定 */
-    .sticky-wrapper { position: sticky; top: 0; background-color: var(--bg); z-index: 100; padding: 10px 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
-    
-    /* タブ */
-    .tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid var(--primary); }
-    .tab-btn { flex: 1; text-align: center; padding: 12px 5px; background: var(--tab-bg); color: var(--primary); font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; border: none; font-size: 0.95em; transition: 0.2s; }
+    .sticky-wrapper { 
+        position: sticky; 
+        top: 0; 
+        background-color: var(--bg); 
+        z-index: 100; 
+        padding: 10px 0; 
+        border-bottom: 2px solid var(--border); 
+        margin-bottom: 20px; 
+    }
+
+    .tabs { 
+        display: flex; 
+        gap: 4px; 
+        margin-bottom: 12px; 
+        border-bottom: 2px solid var(--primary); 
+        width: 100%; 
+        box-sizing: border-box;
+    }
+
+    .tab-btn { 
+        flex: 1; 
+        text-align: center; 
+        padding: 12px 5px; 
+        background: var(--tab-bg); 
+        color: var(--primary); 
+        font-weight: bold; 
+        border-radius: 8px 8px 0 0; 
+        cursor: pointer; 
+        border: none; 
+        font-size: 0.95em; 
+        transition: 0.2s; 
+    }
     .tab-btn.active { background: var(--primary); color: white; }
     
-    .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+    .header { 
+        display: flex; 
+        flex-wrap: wrap; 
+        justify-content: space-between; 
+        align-items: center; 
+        gap: 10px; 
+        width: 100%; 
+    }
     .header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .header-right { display: flex; gap: 8px; }
     h1 { margin: 0; font-size: 1.3em; }
     
-    button { cursor: pointer; padding: 8px 12px; border: none; border-radius: 6px; background-color: var(--primary); color: white; font-weight: bold; font-size: 0.9em; transition: opacity 0.2s; white-space: nowrap; }
+    button { 
+        cursor: pointer; 
+        padding: 8px 14px; 
+        border: none; 
+        border-radius: 6px; 
+        background-color: var(--primary); 
+        color: white; 
+        font-weight: bold; 
+        font-size: 0.9em; 
+        transition: opacity 0.2s; 
+        white-space: nowrap; 
+    }
     button:hover { opacity: 0.8; }
     .btn-danger { background-color: var(--danger); } 
     .btn-success { background-color: var(--success); } 
     .btn-accent { background-color: var(--accent); } 
     .btn-warning { background-color: var(--warning); color: #333; }
     
-    /* レジボタン */
-    .btn-calc { padding: 6px 10px; min-width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 1em; }
+    .btn-calc { padding: 6px 10px; min-width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 0.9em; }
     
-    .total-display { display: flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    /* 並び替え用ボタン */
+    .btn-order {
+        background: var(--tab-bg);
+        color: var(--primary);
+        padding: 4px 8px;
+        font-size: 0.8em;
+        border: 1px solid var(--border);
+    }
+    .btn-order:disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    .total-display { 
+        display: flex; 
+        align-items: center; 
+        gap: 10px; 
+        background: var(--card-bg); 
+        padding: 6px 15px; 
+        border-radius: 8px; 
+        border: 1px solid var(--border); 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    }
     .total-price { font-size: 1.4em; font-weight: bold; color: var(--accent); }
     
-    .makanai-container { display: flex; align-items: center; gap: 6px; font-weight: bold; background: var(--makanai-bg); color: var(--makanai-text); padding: 8px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--makanai-border); font-size: 0.9em; }
+    .makanai-container { 
+        display: flex; 
+        align-items: center; 
+        gap: 6px; 
+        font-weight: bold; 
+        background: var(--makanai-bg); 
+        color: var(--makanai-text); 
+        padding: 8px 12px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        border: 1px solid var(--makanai-border); 
+        font-size: 0.9em; 
+    }
     
-    .category-section { margin-bottom: 25px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .category-title { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 15px; color: var(--primary); font-size: 1.1em; }
+    .category-section { 
+        margin-bottom: 25px; 
+        background: var(--card-bg); 
+        border: 1px solid var(--border); 
+        border-radius: 10px; 
+        padding: 15px; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        box-sizing: border-box; 
+    }
+    .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border); 
+        padding-bottom: 8px; 
+        margin-bottom: 15px;
+    }
+    .category-title { margin: 0; color: var(--primary); font-size: 1.1em; }
     
-    .product-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 12px 0; border-bottom: 1px dashed var(--border); gap: 10px; }
+    .product-row { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: flex-end; 
+        padding: 12px 0; 
+        border-bottom: 1px dashed var(--border); 
+        gap: 10px; 
+    }
     .product-row:last-child { border-bottom: none; }
     .product-info { flex: 1; min-width: 0; }
     .product-name { font-size: 1.1em; font-weight: bold; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -60,7 +180,18 @@
     .product-controls { display: flex; align-items: center; gap: 4px; }
     .control-group { display: flex; gap: 2px; }
     
-    .count-input { font-size: 1.2em; font-weight: bold; width: 80px; height: 38px; text-align: center; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--input-text); box-sizing: border-box; }
+    .count-input { 
+        font-size: 1.2em; 
+        font-weight: bold; 
+        width: 75px; 
+        height: 38px; 
+        text-align: center; 
+        border: 1px solid var(--border); 
+        border-radius: 6px; 
+        background: var(--input-bg); 
+        color: var(--input-text); 
+        box-sizing: border-box; 
+    }
     .count-input::-webkit-outer-spin-button, .count-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     
     .theme-toggle-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--primary); font-size: 1.1em; padding: 6px 12px; border-radius: 20px; cursor: pointer; }
@@ -68,7 +199,7 @@
     #message-box { position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; color: white; font-weight: bold; display: none; z-index: 3000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-    .modal-content { background: var(--card-bg); padding: 25px; border-radius: 12px; min-width: 300px; max-width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .modal-content { background: var(--card-bg); padding: 25px; border-radius: 12px; min-width: 320px; max-width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
     .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 8px 0; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 1em; }
     .modal-content label { display: block; text-align: left; font-size: 0.85em; font-weight: bold; color: var(--muted); margin-top: 5px; }
     
@@ -76,38 +207,43 @@
     .loader { border: 5px solid var(--border); border-top: 5px solid var(--accent); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     
-    @media (max-width: 700px) {
+    @media (max-width: 730px) {
         .product-row { flex-direction: column; align-items: stretch; gap: 10px; }
         .product-controls { justify-content: space-between; width: 100%; }
-        .count-input { flex: 1; min-width: 60px; }
+        .count-input { flex: 1; min-width: 50px; }
     }
     
-    .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); gap: 10px; }
-    .settings-info { flex: 1; text-align: left; }
+    .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 10px; }
+    .settings-info { flex: 1; text-align: left; overflow: hidden; }
+    .settings-info strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .settings-actions { display: flex; gap: 5px; }
     #unsaved-warning { background: #fdeaea; color: #d9534f; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; border: 1px solid #ebccd1; }
+    
+    .view-container { min-height: 50vh; width: 100%; box-sizing: border-box; }
 </style>
 </head>
 <body>
-<div id="loading-overlay"><div class="loader"></div><h3>クラウドと同期中...</h3></div>
+<div id="loading-overlay"><div class="loader"></div><h3>クラウド同期中...</h3></div>
+
 <div class="container" id="main-app" style="display: none;">
     <div class="sticky-wrapper">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-                <h1 style="margin: 0;">販売計算ツール</h1>
-                <span id="cloud-status" style="font-size: 0.75em; color: var(--success); font-weight: bold;">☁️ 同期完了</span>
+                <h1 style="margin: 0;">Chill Smoke</h1>
+                <span id="cloud-status" style="font-size: 0.75em; color: var(--success); font-weight: bold;">☁️ OK</span>
             </div>
             <div style="display: flex; gap: 8px;">
                 <button class="theme-toggle-btn" onclick="openSettingsPrompt()" title="設定">⚙️</button>
                 <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切り替え">🌙</button>
             </div>
         </div>
+        
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('恒常商品')" id="tab-kojo">恒常商品</button>
             <button class="tab-btn" onclick="switchTab('卸商品')" id="tab-oroshi">卸商品</button>
         </div>
+        
         <div class="header" id="header-actions">
-            <!-- 計算機モードヘッダー -->
             <div id="calc-header-left" class="header-left">
                 <div class="total-display">
                     <span style="font-weight:bold; color:var(--muted); font-size:0.85em;">合計:</span> 
@@ -116,42 +252,69 @@
                 </div>
                 <label id="makanai-label" class="makanai-container"><input type="checkbox" id="makanai-check" onchange="toggleMakanai()">まかない割</label>
             </div>
-            <div id="calc-header-right" class="header-right"><button class="btn-danger" onclick="resetAll()">全リセット</button></div>
+            <div id="calc-header-right" class="header-right"><button class="btn-danger" onclick="resetAll()">リセット</button></div>
             
-            <!-- 設定モードヘッダー -->
-            <div id="settings-header-left" style="display:none;"><span id="unsaved-warning" style="display:none;">⚠️ 未保存</span></div>
-            <div id="settings-header-right" style="display:none;"><button class="btn-success" onclick="confirmSaveSettings()">💾 クラウドへ保存</button></div>
+            <div id="settings-header-left" style="display:none; align-items: center; gap: 10px;">
+                <button class="btn-accent" onclick="openAddModal()">＋ 新規商品を追加</button>
+                <span id="unsaved-warning" style="display:none;">⚠️ 未保存</span>
+            </div>
+            <div id="settings-header-right" style="display:none;"><button class="btn-success" onclick="confirmSaveSettings()">💾 クラウド保存</button></div>
         </div>
     </div>
     
-    <div id="calc-view"><div id="categories-container"></div></div>
+    <div id="calc-view"><div id="categories-container" class="view-container"></div></div>
     
     <div id="settings-view" style="display:none;">
-        <div class="tabs"><button class="tab-btn active" onclick="switchSettingsTab('恒常商品')" id="settings-tab-kojo">恒常</button><button class="tab-btn" onclick="switchSettingsTab('卸商品')" id="settings-tab-oroshi">卸</button></div>
-        <div class="settings-form">
-            <input type="text" id="new-category" placeholder="種類・店舗名"><input type="text" id="new-name" placeholder="商品名"><input type="number" id="new-price" placeholder="価格">
-            <input type="text" id="new-recovery" placeholder="回復量"><input type="text" id="new-notes" placeholder="備考"><button class="btn-accent" onclick="addProduct()">追加</button>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchSettingsTab('恒常商品')" id="settings-tab-kojo">恒常設定</button>
+            <button class="tab-btn" onclick="switchSettingsTab('卸商品')" id="settings-tab-oroshi">卸設定</button>
         </div>
-        <div id="settings-list-container"></div>
+        <div id="settings-list-container" class="view-container"></div>
         <div style="margin-top:20px; text-align:center;"><button class="btn-warning" onclick="restoreDefaultProducts()">初期状態に戻す(クラウド上書き)</button></div>
     </div>
 </div>
 
-<!-- モーダル類 -->
 <div id="message-box"></div>
-<div id="password-modal" class="modal-overlay"><div class="modal-content"><h3>設定アクセス</h3><p>パスワードを入力してください</p><input type="password" id="pass-in" onkeypress="if(event.key==='Enter')verifyPassword()"><div style="margin-top:15px; display:flex; justify-content:center; gap:10px;"><button onclick="closePasswordModal()" style="background:#888;">戻る</button><button class="btn-success" onclick="verifyPassword()">OK</button></div></div></div>
-<div id="confirm-modal" class="modal-overlay"><div class="modal-content"><h3>確認</h3><p id="confirm-msg" style="white-space:pre-wrap;"></p><div style="margin-top:15px; display:flex; justify-content:center; gap:10px;"><button onclick="closeConfirm(false)" style="background:#888;">いいえ</button><button class="btn-danger" onclick="closeConfirm(true)">はい</button></div></div></div>
+
+<div id="password-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>設定アクセス</h3>
+        <p>パスワードを入力してください</p>
+        <input type="password" id="pass-in" onkeypress="if(event.key==='Enter')verifyPassword()">
+        <div style="margin-top:15px; display:flex; justify-content:center; gap:10px;">
+            <button onclick="closePasswordModal()" style="background:#888;">戻る</button>
+            <button class="btn-success" onclick="verifyPassword()">OK</button>
+        </div>
+    </div>
+</div>
+
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>確認</h3>
+        <p id="confirm-msg" style="white-space:pre-wrap;"></p>
+        <div style="margin-top:15px; display:flex; justify-content:center; gap:10px;">
+            <button onclick="closeConfirm(false)" style="background:#888;">いいえ</button>
+            <button class="btn-danger" onclick="closeConfirm(true)">はい</button>
+        </div>
+    </div>
+</div>
+
 <div id="edit-modal" class="modal-overlay">
     <div class="modal-content">
-        <h3>商品の編集</h3>
-        <label>カテゴリ/店舗</label><input type="text" id="edit-category">
-        <label>商品名</label><input type="text" id="edit-name">
-        <label>価格</label><input type="number" id="edit-price">
-        <label>回復量</label><input type="text" id="edit-recovery">
-        <label>備考</label><input type="text" id="edit-notes">
+        <h3 id="modal-title">商品の編集</h3>
+        <label id="category-label">カテゴリ/店舗名</label>
+        <input type="text" id="edit-category" placeholder="例: Vape / リッパーDOC.">
+        <label>商品名</label>
+        <input type="text" id="edit-name" placeholder="例: もくもく">
+        <label>価格</label>
+        <input type="number" id="edit-price" placeholder="例: 200000">
+        <label>回復量</label>
+        <input type="text" id="edit-recovery" placeholder="例: 20%">
+        <label>備考</label>
+        <input type="text" id="edit-notes" placeholder="例: 1箱10本入り">
         <div style="margin-top:15px; display:flex; justify-content:center; gap:10px;">
             <button onclick="closeEditModal()" style="background:#888;">キャンセル</button>
-            <button class="btn-success" onclick="saveEdit()">変更を適用</button>
+            <button class="btn-success" id="btn-modal-save" onclick="saveProduct()">適用</button>
         </div>
     </div>
 </div>
@@ -161,7 +324,6 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Firebase設定
     const firebaseConfig = {
         apiKey: "AIzaSyCv9wbRcl4pu1RRFFQ0KS_ift9SoQZobJU",
         authDomain: "chillsmoke-365c3.firebaseapp.com",
@@ -176,7 +338,7 @@
     const db = getFirestore(app);
     const appId = 'chill-smoke-app-v1';
 
-    let user=null, products=[], localCounts={}, currentTab='恒常商品', currentSettingsTab='恒常商品', isMakanai=false, hasUnsavedChanges=false, confirmCallback=null, editingId=null;
+    let user=null, products=[], localCounts={}, currentTab='恒常商品', currentSettingsTab='恒常商品', isMakanai=false, hasUnsavedChanges=false, confirmCallback=null, editingId=null, isLoggedIn=false;
 
     const defaultProducts = [
         { id: 1, page: "恒常商品", category: "マルコポーロ", name: "レッド", price: 100000, recovery: "10%", notes: "10本入" },
@@ -200,7 +362,6 @@
     }});
     signInAnonymously(auth);
 
-    // テーマ切替
     window.toggleTheme = () => { 
         const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; 
         document.documentElement.setAttribute('data-theme', t); 
@@ -211,7 +372,6 @@
     document.documentElement.setAttribute('data-theme', savedT); 
     document.getElementById('theme-toggle-btn').textContent = savedT==='dark'?'☀️':'🌙';
 
-    // タブ切替
     window.switchTab = t => { 
         if(currentTab==='設定'&&hasUnsavedChanges){ 
             showConfirm("変更を破棄して移動しますか？", r=>{if(r){hasUnsavedChanges=false; execTab(t);}}); 
@@ -219,41 +379,58 @@
         } 
         execTab(t); 
     };
+
     function execTab(t){ 
         currentTab=t; 
-        document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('active')); 
+        document.querySelectorAll('.sticky-wrapper > .tabs .tab-btn').forEach(b=>b.classList.remove('active')); 
         if(t==='恒常商品')document.getElementById('tab-kojo').classList.add('active'); 
         if(t==='卸商品')document.getElementById('tab-oroshi').classList.add('active');
+        
         document.getElementById('calc-view').style.display = t==='設定'?'none':'block'; 
         document.getElementById('settings-view').style.display = t==='設定'?'block':'none';
+        
         document.getElementById('calc-header-left').style.display = t==='設定'?'none':'flex'; 
         document.getElementById('calc-header-right').style.display = t==='設定'?'none':'flex';
         document.getElementById('settings-header-left').style.display = t==='設定'?'flex':'none'; 
         document.getElementById('settings-header-right').style.display = t==='設定'?'flex':'none';
+        
         document.getElementById('makanai-label').style.display = t==='恒常商品'?'flex':'none';
-        if(t==='設定')renderSettings(); else renderCalc();
+        
+        if(t==='設定') renderSettings(); else renderCalc();
     }
 
-    // パスワード
-    window.openSettingsPrompt = () => { document.getElementById('pass-in').value=''; document.getElementById('password-modal').style.display='flex'; setTimeout(()=>document.getElementById('pass-in').focus(),100); };
-    window.verifyPassword = () => { if(document.getElementById('pass-in').value==='7073'){ document.getElementById('password-modal').style.display='none'; switchTab('設定'); } else showMessage("パスワードが違います", "error"); };
-    window.closePasswordModal = () => document.getElementById('password-modal').style.display='none';
-
-    // クラウド保存
-    window.confirmSaveSettings = async () => { 
-        showConfirm("設定をクラウドに保存し、全員に共有しますか？", async r => { 
-            if(r){ 
-                document.getElementById('cloud-status').textContent="☁️ 保存中...";
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products});
-                hasUnsavedChanges=false; 
-                document.getElementById('unsaved-warning').style.display='none'; 
-                document.getElementById('cloud-status').textContent="☁️ 同期完了"; 
-                showMessage("保存完了", "success");
-            }
-        });
+    window.openSettingsPrompt = () => { 
+        if (isLoggedIn) {
+            switchTab('設定');
+            return;
+        }
+        document.getElementById('pass-in').value=''; 
+        document.getElementById('password-modal').style.display='flex'; 
+        setTimeout(()=>document.getElementById('pass-in').focus(),100); 
     };
 
-    // レジロジック
+    window.verifyPassword = () => { 
+        if(document.getElementById('pass-in').value==='7073'){ 
+            isLoggedIn = true;
+            document.getElementById('password-modal').style.display='none'; 
+            switchTab('設定'); 
+        } else {
+            showMessage("パスワードが違います", "error"); 
+        }
+    };
+    window.closePasswordModal = () => document.getElementById('password-modal').style.display='none';
+
+    window.confirmSaveSettings = async () => { 
+        showConfirm("設定をクラウドに保存し、全員に共有しますか？", async r => { if(r){ 
+            document.getElementById('cloud-status').textContent="☁️ 保存中...";
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products});
+            hasUnsavedChanges=false; 
+            document.getElementById('unsaved-warning').style.display='none'; 
+            document.getElementById('cloud-status').textContent="☁️ OK"; 
+            showMessage("保存完了", "success");
+        }});
+    };
+
     window.changeCount = (id, a) => { 
         localCounts[id]=(localCounts[id]||0)+a; 
         if(localCounts[id]<0)localCounts[id]=0; 
@@ -300,118 +477,141 @@
         showMessage("合計金額をコピーしました", "success"); 
     };
 
-    // 計算描画
     function renderCalc(){ 
-        const container=document.getElementById('categories-container'); 
-        container.innerHTML=''; 
+        const c=document.getElementById('categories-container'); 
+        c.innerHTML=''; 
         const ps=products.filter(p=>p.page===currentTab); 
         const cats=[...new Set(ps.map(p=>p.category))];
         cats.forEach(cat=>{ 
             const cps=ps.filter(p=>p.category===cat); 
-            let h=`<div class="category-section"><h2 class="category-title">${cat}</h2>`; 
-            cps.forEach(p=>{ 
-                let prDisp=`¥${p.price.toLocaleString()}`; 
-                if(currentTab==='恒常商品'&&isMakanai)prDisp=`<span style="text-decoration:line-through; font-size:0.8em; color:var(--muted); font-weight:normal;">¥${p.price.toLocaleString()}</span> ¥${Math.floor(p.price*0.6).toLocaleString()}`;
-                h+=`<div class="product-row">
-                    <div class="product-info">
-                        <div class="product-name">${p.name}</div>
-                        <div class="product-meta">
-                            <span style="color:var(--accent); font-weight:bold; font-size:1.15em; min-width:85px;">${prDisp}</span>
-                            <span>${p.recovery?'回復:'+p.recovery:''}</span>
-                            <span>${p.notes?p.notes:''}</span>
-                        </div>
-                    </div>
-                    <div class="product-controls">
-                        <div class="control-group">
-                            <button class="btn-calc" onclick="changeCount(${p.id},-100)">-100</button>
-                            <button class="btn-calc" onclick="changeCount(${p.id},-10)">-10</button>
-                            <button class="btn-calc" onclick="changeCount(${p.id},-1)">-</button>
-                        </div>
-                        <input type="number" class="count-input" id="count-${p.id}" value="${localCounts[p.id]||0}" onchange="updateCountDirectly(${p.id},this.value)">
-                        <div class="control-group">
-                            <button class="btn-calc" onclick="changeCount(${p.id},1)">+</button>
-                            <button class="btn-calc" onclick="changeCount(${p.id},10)">+10</button>
-                            <button class="btn-calc" onclick="changeCount(${p.id},100)">+100</button>
-                        </div>
-                    </div>
-                </div>`;
-            }); 
-            h+='</div>'; container.innerHTML+=h; 
+            let h=`<div class="category-section"><h2 class="category-title">${cat}</h2>`; cps.forEach(p=>{ 
+                let prDisp=`¥${p.price.toLocaleString()}`; if(currentTab==='恒常商品'&&isMakanai)prDisp=`<span style="text-decoration:line-through; font-size:0.8em; opacity:0.6;">¥${p.price.toLocaleString()}</span> ¥${Math.floor(p.price*0.6).toLocaleString()}`;
+                h+=`<div class="product-row"><div class="product-info"><div class="product-name">${p.name}</div><div class="product-meta"><span style="color:var(--accent); font-weight:bold; min-width:85px;">${prDisp}</span><span>${p.recovery?'回復:'+p.recovery:''}</span><span>${p.notes?p.notes:''}</span></div></div>
+                <div class="product-controls"><div class="control-group"><button class="btn-calc" onclick="changeCount(${p.id},-100)">-100</button><button class="btn-calc" onclick="changeCount(${p.id},-10)">-10</button><button class="btn-calc" onclick="changeCount(${p.id},-1)">-</button></div>
+                <input type="number" class="count-input" id="count-${p.id}" value="${localCounts[p.id]||0}" onchange="updateCountDirectly(${p.id},this.value)">
+                <div class="control-group"><button class="btn-calc" onclick="changeCount(${p.id},1)">+</button><button class="btn-calc" onclick="changeCount(${p.id},10)">+10</button><button class="btn-calc" onclick="changeCount(${p.id},100)">+100</button></div></div></div>`;
+            }); h+='</div>'; c.innerHTML+=h; 
         }); 
         updateTotal(); 
     }
 
-    // 設定描画
     window.switchSettingsTab = t => { 
         currentSettingsTab=t; 
-        document.querySelectorAll('#settings-view .tab-btn').forEach(b=>b.classList.remove('active')); 
+        document.querySelectorAll('#settings-view .tabs .tab-btn').forEach(b=>b.classList.remove('active')); 
         if(t==='恒常商品')document.getElementById('settings-tab-kojo').classList.add('active'); 
         else document.getElementById('settings-tab-oroshi').classList.add('active'); 
-        document.getElementById('new-page').value=t; 
         renderSettings(); 
     };
+
     function renderSettings(){ 
-        const container=document.getElementById('settings-list-container'); 
-        container.innerHTML=''; 
+        const c=document.getElementById('settings-list-container'); c.innerHTML=''; 
         const ps=products.filter(p=>p.page===currentSettingsTab); 
         const cats=[...new Set(ps.map(p=>p.category))];
-        cats.forEach(cat=>{ 
-            let h=`<div class="category-section"><h3 class="category-title">${cat}</h3>`; 
-            ps.filter(p=>p.category===cat).forEach(p=>{ 
-                h+=`<div class="settings-item">
-                    <div class="settings-info"><strong>${p.name}</strong> (¥${p.price.toLocaleString()})</div>
-                    <div class="settings-actions">
-                        <button class="btn-accent" onclick="editProduct(${p.id})">編集</button>
-                        <button class="btn-danger" onclick="delP(${p.id})">削除</button>
+        cats.forEach((cat, index)=>{ 
+            let h=`<div class="category-section">
+                <div class="category-header">
+                    <h3 class="category-title">${cat}</h3>
+                    <div class="header-right">
+                        <button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+                        <button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', 1)" ${index === cats.length - 1 ? 'disabled' : ''}>▼</button>
                     </div>
                 </div>`; 
+            ps.filter(p=>p.category===cat).forEach(p=>{ 
+                h+=`<div class="settings-item"><div class="settings-info"><strong>${p.name}</strong> (¥${p.price.toLocaleString()})</div><div class="settings-actions"><button class="btn-accent" onclick="editProduct(${p.id})">編集</button><button class="btn-danger" onclick="delP(${p.id})">削除</button></div></div>`; 
             }); 
-            h+='</div>'; container.innerHTML+=h; 
+            h+='</div>'; c.innerHTML+=h; 
         });
     }
 
-    // 商品操作
-    window.addProduct = () => { 
-        const cat=document.getElementById('new-category').value, name=document.getElementById('new-name').value, price=parseInt(document.getElementById('new-price').value); 
-        if(!cat||!name||isNaN(price)){ showMessage("必須項目を入力してください", "error"); return; } 
-        const p={id:Date.now(), page:currentSettingsTab, category:cat, name:name, price:price, recovery:document.getElementById('new-recovery').value, notes:document.getElementById('new-notes').value}; 
-        products.push(p); markAsUnsaved(); renderSettings(); 
+    // カテゴリの並び替えロジック
+    window.moveCategory = (page, targetCat, direction) => {
+        const ps = products.filter(p => p.page === page);
+        const otherPs = products.filter(p => p.page !== page);
+        const cats = [...new Set(ps.map(p => p.category))];
+        const idx = cats.indexOf(targetCat);
+        const newIdx = idx + direction;
+
+        if (newIdx < 0 || newIdx >= cats.length) return;
+
+        // カテゴリ名の配列をスワップ
+        [cats[idx], cats[newIdx]] = [cats[newIdx], cats[idx]];
+
+        // 新しい並び順に従ってページ内の商品を再構築
+        const reorderedPs = [];
+        cats.forEach(catName => {
+            const catProducts = ps.filter(p => p.category === catName);
+            reorderedPs.push(...catProducts);
+        });
+
+        // 全体の商品配列を更新
+        // 他のページの商品はそのまま、現在のページの商品だけ並び替えたものを結合
+        products = [...otherPs, ...reorderedPs];
+
+        markAsUnsaved();
+        renderSettings();
     };
-    window.delP = id => { 
-        showConfirm("削除しますか？", r => { if(r){ products=products.filter(p=>p.id!==id); markAsUnsaved(); renderSettings(); }}); 
+
+    window.openAddModal = () => {
+        editingId = null;
+        document.getElementById('modal-title').textContent = "新規商品の登録";
+        document.getElementById('category-label').textContent = currentSettingsTab === '卸商品' ? '店舗名' : '種類/カテゴリ';
+        document.getElementById('edit-category').value = "";
+        document.getElementById('edit-name').value = "";
+        document.getElementById('edit-price').value = "";
+        document.getElementById('edit-recovery').value = "";
+        document.getElementById('edit-notes').value = "";
+        document.getElementById('btn-modal-save').textContent = "登録";
+        document.getElementById('edit-modal').style.display = 'flex';
     };
+
     window.editProduct = id => {
         const p = products.find(i => i.id === id); if(!p) return;
         editingId = id;
+        document.getElementById('modal-title').textContent = "商品の編集";
+        document.getElementById('category-label').textContent = p.page === '卸商品' ? '店舗名' : '種類/カテゴリ';
         document.getElementById('edit-category').value = p.category;
         document.getElementById('edit-name').value = p.name;
         document.getElementById('edit-price').value = p.price;
         document.getElementById('edit-recovery').value = p.recovery || '';
         document.getElementById('edit-notes').value = p.notes || '';
+        document.getElementById('btn-modal-save').textContent = "適用";
         document.getElementById('edit-modal').style.display = 'flex';
     };
-    window.closeEditModal = () => { document.getElementById('edit-modal').style.display = 'none'; editingId = null; };
-    window.saveEdit = () => {
-        const index = products.findIndex(p => p.id === editingId);
-        if(index !== -1) {
-            products[index] = { ...products[index], 
-                category: document.getElementById('edit-category').value,
-                name: document.getElementById('edit-name').value,
-                price: parseInt(document.getElementById('edit-price').value),
-                recovery: document.getElementById('edit-recovery').value,
-                notes: document.getElementById('edit-notes').value
-            };
-            markAsUnsaved(); renderSettings(); closeEditModal(); showMessage("適用完了", "success");
-        }
-    };
-    window.restoreDefaultProducts = () => { 
-        showConfirm("初期状態に戻しますか？(クラウドも上書きされます)", async r => { 
-            if(r){ 
-                products=JSON.parse(JSON.stringify(defaultProducts)); 
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products}); 
-                hasUnsavedChanges=false; renderSettings(); showMessage("初期化完了", "success"); 
+
+    window.saveProduct = () => {
+        const cat = document.getElementById('edit-category').value.trim();
+        const name = document.getElementById('edit-name').value.trim();
+        const priceInput = document.getElementById('edit-price').value;
+        const price = parseInt(priceInput);
+        
+        if(!cat || !name || isNaN(price)){ showMessage("必須項目を入力してください", "error"); return; }
+
+        if (editingId === null) {
+            const p = {id:Date.now(), page:currentSettingsTab, category:cat, name:name, price:price, recovery:document.getElementById('edit-recovery').value, notes:document.getElementById('edit-notes').value}; 
+            products.push(p);
+            showMessage("商品を追加しました", "success");
+        } else {
+            const index = products.findIndex(p => p.id === editingId);
+            if(index !== -1) {
+                products[index] = { ...products[index], category:cat, name:name, price:price, recovery:document.getElementById('edit-recovery').value, notes:document.getElementById('edit-notes').value };
+                showMessage("変更を適用しました", "success");
             }
-        }); 
+        }
+        markAsUnsaved(); renderSettings(); closeEditModal();
+    };
+
+    window.delP = id => { 
+        showConfirm("削除しますか？", r => { if(r){ products=products.filter(p=>p.id!==id); markAsUnsaved(); renderSettings(); }}); 
+    };
+
+    window.closeEditModal = () => { document.getElementById('edit-modal').style.display = 'none'; editingId = null; };
+    
+    window.restoreDefaultProducts = () => { 
+        showConfirm("初期状態に戻しますか？(クラウドも上書きされます)", async r => { if(r){ 
+            products=JSON.parse(JSON.stringify(defaultProducts)); 
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products}); 
+            hasUnsavedChanges=false; renderSettings(); showMessage("初期化完了", "success"); 
+        }}); 
     };
 
     function markAsUnsaved() { hasUnsavedChanges=true; document.getElementById('unsaved-warning').style.display='inline'; }
