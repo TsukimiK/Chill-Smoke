@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>販売計算ツール | GMC Chill Smoke v2</title>
 <style>
+    /* CSS変数のベース定義 */
     :root {
-        --primary: #1e293b;
-        --bg: #f8fafc;
-        --card-bg: #ffffff;
+        --theme-primary: #1e293b;
+        --theme-bg: #f8fafc;
+        --theme-card-bg: #ffffff;
+        --theme-accent-solid: #6366f1;
         --border: #e2e8f0;
-        --accent: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        --accent-solid: #6366f1;
         --danger: #ef4444;
         --success: #10b981;
         --warning: #f59e0b;
@@ -23,14 +23,19 @@
         --makanai-border: #fef3c7;
         --makanai-text: #92400e;
         --muted: #64748b;
-        --header-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
         --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        
+        --primary: var(--custom-primary, var(--theme-primary));
+        --bg: var(--custom-bg, var(--theme-bg));
+        --card-bg: var(--custom-card-bg, var(--theme-card-bg));
+        --accent-solid: var(--custom-accent, var(--theme-accent-solid));
+        --accent: linear-gradient(135deg, var(--accent-solid) 0%, #a855f7 100%);
     }
 
     [data-theme="dark"] {
-        --primary: #f8fafc;
-        --bg: #0f172a;
-        --card-bg: #1e293b;
+        --theme-primary: #f8fafc;
+        --theme-bg: #0f172a;
+        --theme-card-bg: #1e293b;
         --border: #334155;
         --input-bg: #0f172a;
         --input-text: #f8fafc;
@@ -42,23 +47,45 @@
         --muted: #94a3b8;
     }
 
-    html { overflow-y: scroll; scroll-behavior: smooth; }
-
+    html { 
+        overflow-y: scroll; 
+        scroll-behavior: smooth; 
+        background-color: var(--bg); 
+    }
+    
     body { 
         font-family: 'Inter', 'Hiragino Kaku Gothic ProN', sans-serif; 
-        background-color: var(--bg); 
+        background-color: transparent; 
         color: var(--primary); 
         margin: 0; padding: 0; line-height: 1.6;
-        transition: background-color 0.3s, color 0.3s;
+        transition: color 0.3s;
+    }
+
+    .bg-watermark {
+        position: fixed;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90vw; max-width: 600px; height: 90vh;
+        z-index: -1; pointer-events: none;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        opacity: 0.05;
+        display: none; 
+    }
+    
+    [data-theme="dark"] .bg-watermark {
+        opacity: 0.05;
+        filter: invert(1); 
     }
 
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        to { opacity: 1; transform: none; }
     }
     .view-container { animation: fadeInUp 0.4s ease-out forwards; padding-bottom: 80px; }
 
-    .container { max-width: 850px; margin: 0 auto; padding: 0 20px; box-sizing: border-box; }
+    .container { max-width: 850px; margin: 0 auto; padding: 0 15px; box-sizing: border-box; }
     
     .sticky-wrapper { 
         position: -webkit-sticky;
@@ -66,13 +93,13 @@
         top: 0; 
         z-index: 2000; 
         width: 100%;
-        background-color: var(--bg);
+        background-color: var(--bg); 
         border-bottom: 2px solid var(--border);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         padding: 10px 0 15px 0;
     }
     
-    .header-content { max-width: 850px; margin: 0 auto; padding: 0 20px; box-sizing: border-box; }
+    .header-content { max-width: 850px; margin: 0 auto; padding: 0 15px; box-sizing: border-box; }
 
     .tabs { 
         display: flex; gap: 8px; margin-bottom: 12px; background: var(--tab-bg);
@@ -104,6 +131,8 @@
     .btn-success { background: var(--success); } 
     .btn-accent { background: var(--accent); } 
     .btn-back { background: var(--tab-bg); color: var(--primary); border: 1px solid var(--border); }
+    .btn-icon { background: transparent; color: var(--primary); border: 1px solid var(--border); padding: 6px 12px; font-size: 1em; box-shadow: none; }
+    .btn-icon:hover { background: var(--tab-bg); }
     
     .btn-calc { 
         padding: 0; min-width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; 
@@ -112,13 +141,29 @@
     .btn-order { background: var(--tab-bg); color: var(--primary); padding: 5px 10px; font-size: 0.8em; border: 1px solid var(--border); border-radius: 6px; }
     .btn-order:disabled { opacity: 0.2; cursor: default; transform: none; box-shadow: none; }
 
-    .search-container { width: 100%; margin-bottom: 12px; position: relative; }
+    /* 検索ポップアップの修正 */
+    @keyframes popupFadeIn {
+        from { opacity: 0; transform: translate(-50%, 10px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .search-popup {
+        display: none;
+        position: absolute;
+        top: 60px; left: 50%; transform: translate(-50%, 0); /* 最初から中央に配置 */
+        width: 90%; max-width: 400px;
+        background: var(--card-bg); padding: 10px 15px; border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--border);
+        z-index: 3000; align-items: center; gap: 10px;
+    }
+    .search-popup.active { 
+        display: flex; 
+        animation: popupFadeIn 0.2s ease-out forwards;
+    }
     .search-input {
-        width: 100%; padding: 10px 12px 10px 40px; border-radius: 10px; border: 2px solid var(--border);
-        background: var(--card-bg); color: var(--input-text); font-size: 0.9em; box-sizing: border-box; transition: all 0.2s;
+        flex: 1; padding: 10px 12px; border-radius: 8px; border: 2px solid var(--border);
+        background: var(--input-bg); color: var(--input-text); font-size: 0.9em; box-sizing: border-box;
     }
     .search-input:focus { border-color: var(--accent-solid); outline: none; }
-    .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
 
     .total-display { 
         display: flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 6px 16px; 
@@ -166,17 +211,22 @@
         color: white; font-weight: 700; display: none; z-index: 3000; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); 
     }
     
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
     .modal-content { 
-        background: var(--card-bg); padding: 35px; border-radius: 24px; min-width: 350px; max-width: 90%; 
-        text-align: center; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); 
+        background: var(--card-bg); padding: 30px; border-radius: 20px; min-width: 320px; max-width: 90%; 
+        text-align: left; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); 
     }
-    .modal-content input, .modal-content select { 
-        width: 100%; padding: 12px; margin: 10px 0; background: var(--tab-bg); color: var(--input-text); 
-        border: 1px solid var(--border); border-radius: 12px; box-sizing: border-box; font-size: 1em; 
+    .modal-content h3 { margin-top: 0; font-weight: 800; font-size: 1.3em; margin-bottom: 20px; text-align: center; }
+    .modal-content input[type="text"], .modal-content input[type="number"], .modal-content select { 
+        width: 100%; padding: 12px; margin: 8px 0 15px 0; background: var(--input-bg); color: var(--input-text); 
+        border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 1em; 
     }
+    .modal-content label { display: block; font-size: 0.85em; font-weight: 700; color: var(--muted); margin-top: 5px; }
 
-    /* 設定項目のスタイル改善 */
+    .sys-settings-group { background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); }
+    .sys-color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .sys-color-grid select, .sys-color-grid input { margin: 0; }
+    
     .settings-item { 
         display: flex; justify-content: space-between; align-items: flex-start; padding: 16px; 
         border-bottom: 1px solid var(--tab-bg); gap: 15px; border-radius: 12px; transition: background 0.2s; 
@@ -188,7 +238,7 @@
     .settings-btns { display: flex; gap: 6px; }
     .settings-order-stack { display: flex; flex-direction: column; gap: 4px; }
     .btn-small-order { padding: 4px 8px; font-size: 0.7em; min-width: 32px; }
-    
+
     #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     .loader { border: 4px solid var(--border); border-top: 4px solid var(--accent-solid); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; margin-bottom: 20px; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -200,29 +250,37 @@
         .product-controls { justify-content: space-between; width: 100%; }
         .settings-item { flex-direction: column; align-items: stretch; }
         .settings-actions-group { justify-content: space-between; }
+        .search-popup { top: 120px; }
+        .sys-color-grid { grid-template-columns: 1fr; }
     }
 </style>
 </head>
 <body>
+<!-- 背景ロゴ -->
+<div class="bg-watermark" id="watermark"></div>
+
 <div id="loading-overlay"><div class="loader"></div><h3 style="font-weight:800; color:var(--muted)">Secure Cloud Syncing...</h3></div>
 
+<!-- 検索ポップアップ -->
+<div id="search-popup" class="search-popup">
+    <input type="text" class="search-input" id="search-query" placeholder="商品名、カテゴリを入力..." oninput="handleSearch(this.value)">
+    <button class="btn-back" style="padding: 10px;" onclick="closeSearchPopup()">✖</button>
+</div>
+
 <div id="main-app" style="display: none;">
+    <!-- スクロールしても固定されるヘッダー -->
     <header class="sticky-wrapper" id="fixed-header">
         <div class="header-content">
             <div class="header-top">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <h1>GMC Chill Smoke v2</h1>
                     <span id="cloud-status" style="font-size: 0.6em; color: var(--success); font-weight: 800; background: var(--tab-bg); padding: 2px 8px; border-radius: 20px;">SYNCED</span>
+                    <button class="btn-icon" onclick="toggleSearchPopup()" title="検索" id="btn-search-toggle">🔍</button>
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button id="main-settings-btn" class="theme-toggle-btn" onclick="openSettingsPrompt()" title="設定">⚙️</button>
                     <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切り替え">🌙</button>
                 </div>
-            </div>
-            
-            <div class="search-container" id="search-area">
-                <span class="search-icon">🔍</span>
-                <input type="text" class="search-input" id="search-query" placeholder="商品名、カテゴリで検索..." oninput="handleSearch(this.value)">
             </div>
 
             <div class="tabs" id="main-tabs-area">
@@ -247,7 +305,7 @@
                 <div id="settings-header-left" style="display:none; align-items: center; gap: 12px;">
                     <button class="btn-back" onclick="switchTab('恒常商品')">← 戻る</button>
                     <button class="btn-accent" onclick="openAddModal()">＋ 商品追加</button>
-                    <span id="unsaved-warning" style="display:none; color:var(--danger); font-weight:800; font-size:0.7em; padding: 4px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">UNSAVED</span>
+                    <span id="unsaved-warning" style="display:none; color:var(--danger); font-weight:800; font-size:0.7em; padding: 4px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">未保存の変更あり</span>
                 </div>
                 <div id="settings-header-right" style="display:none;">
                     <button class="btn-success" onclick="confirmSaveSettings()">💾 クラウド保存</button>
@@ -265,9 +323,81 @@
             <div class="tabs" style="margin-bottom: 25px;">
                 <button class="tab-btn active" onclick="switchSettingsTab('恒常商品')" id="settings-tab-kojo">恒常設定</button>
                 <button class="tab-btn" onclick="switchSettingsTab('卸商品')" id="settings-tab-oroshi">卸設定</button>
+                <button class="tab-btn" onclick="switchSettingsTab('システム')" id="settings-tab-system">システム</button>
             </div>
+            
             <div id="settings-list-container" class="view-container"></div>
-            <div style="margin-top:30px; text-align:center;"><button class="btn-warning" onclick="restoreDefaultProducts()" style="opacity:0.4; font-size: 0.75em;">初期データへ復元</button></div>
+            
+            <!-- システム設定画面 -->
+            <div id="system-settings-container" class="view-container" style="display:none;">
+                <div class="category-section">
+                    <h3 class="category-title" style="margin-bottom:20px;">システム・デザイン設定</h3>
+                    
+                    <div class="sys-settings-group">
+                        <label>背景ロゴ (ウォーターマーク) のURL</label>
+                        <input type="text" id="sys-logo" placeholder="例: https://example.com/logo.png">
+                        <p style="font-size:0.75em; color:var(--muted); margin-top:-10px; margin-bottom:0;">※空欄にすると非表示になります。</p>
+                    </div>
+                    
+                    <div class="sys-settings-group">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.9em; color: var(--muted);">カラーカスタマイズ</h4>
+                        <div class="sys-color-grid">
+                            <div>
+                                <label>基本文字色 (Text Color)</label>
+                                <select id="sys-text-color">
+                                    <option value="">デフォルトを使用</option>
+                                    <option value="#000000">黒</option>
+                                    <option value="#ffffff">白</option>
+                                    <option value="#ef4444">赤</option>
+                                    <option value="#3b82f6">青</option>
+                                    <option value="#84cc16">黄緑</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>背景色 (Background Color)</label>
+                                <select id="sys-bg-color">
+                                    <option value="">デフォルトを使用</option>
+                                    <option value="#000000">黒</option>
+                                    <option value="#ffffff">白</option>
+                                    <option value="#ef4444">赤</option>
+                                    <option value="#3b82f6">青</option>
+                                    <option value="#84cc16">黄緑</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>カード背景色 (Card Background)</label>
+                                <select id="sys-card-color">
+                                    <option value="">デフォルトを使用</option>
+                                    <option value="#000000">黒</option>
+                                    <option value="#ffffff">白</option>
+                                    <option value="#ef4444">赤</option>
+                                    <option value="#3b82f6">青</option>
+                                    <option value="#84cc16">黄緑</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>アクセントカラー (Accent Color)</label>
+                                <select id="sys-accent-color">
+                                    <option value="">デフォルトを使用</option>
+                                    <option value="#000000">黒</option>
+                                    <option value="#ffffff">白</option>
+                                    <option value="#ef4444">赤</option>
+                                    <option value="#3b82f6">青</option>
+                                    <option value="#84cc16">黄緑</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align:center; margin-top:20px;">
+                        <button class="btn-accent" onclick="applyAndSaveSystemSettings()">システム設定を保存して反映</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="reset-container" style="margin-top:30px; text-align:center;">
+                <button class="btn-warning" onclick="restoreDefaultProducts()" style="opacity:0.4; font-size: 0.75em;">初期データへ復元 (注意)</button>
+            </div>
         </div>
     </main>
 </div>
@@ -275,10 +405,10 @@
 <!-- モーダル類 -->
 <div id="message-box"></div>
 <div id="password-modal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content" style="text-align:center;">
         <h3 style="margin-bottom:10px;">ADMIN ACCESS</h3>
         <p style="font-size:0.85em; color:var(--muted); margin-bottom:15px;">管理者用パスワードを入力してください</p>
-        <input type="password" id="pass-in" placeholder="****" onkeypress="if(event.key==='Enter')verifyPassword()">
+        <input type="password" id="pass-in" placeholder="****" onkeypress="if(event.key==='Enter')verifyPassword()" style="text-align:center;">
         <div style="margin-top:20px; display:flex; justify-content:center; gap:12px;">
             <button onclick="closePasswordModal()" class="btn-back">CANCEL</button>
             <button class="btn-accent" onclick="verifyPassword()">ACCESS</button>
@@ -287,7 +417,7 @@
 </div>
 
 <div id="confirm-modal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content" style="text-align:center;">
         <h3 id="confirm-title">CONFIRMATION</h3>
         <p id="confirm-msg" style="color:var(--muted); margin: 20px 0;"></p>
         <div style="display:flex; justify-content:center; gap:12px;">
@@ -299,7 +429,7 @@
 
 <div id="edit-modal" class="modal-overlay">
     <div class="modal-content">
-        <h3 id="modal-title">PRODUCT EDIT</h3>
+        <h3 id="modal-title" style="text-align:center;">PRODUCT EDIT</h3>
         <label>PAGE</label>
         <select id="edit-page" onchange="updateCategoryList()">
             <option value="恒常商品">恒常商品</option>
@@ -314,17 +444,35 @@
             <div><label>PRICE (¥)</label><input type="number" id="edit-price"></div>
             <div><label>回復量 (%)</label><input type="number" id="edit-recovery"></div>
         </div>
-        <label>NOTES</label><input type="text" id="edit-notes">
+        <label>IMAGE URL (商品画像 - 任意)</label>
+        <input type="text" id="edit-image-url" placeholder="https://example.com/image.png">
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px;">
+            <div>
+                <label>NOTES (備考)</label>
+                <input type="text" id="edit-notes" placeholder="例: 1箱10本入り" style="margin-bottom:0;">
+            </div>
+            <div>
+                <label>文字色 (備考用)</label>
+                <select id="edit-color" style="margin-bottom:0;">
+                    <option value="">標準色</option>
+                    <option value="#000000">黒</option>
+                    <option value="#ffffff">白</option>
+                    <option value="#ef4444">赤</option>
+                    <option value="#3b82f6">青</option>
+                    <option value="#84cc16">黄緑</option>
+                </select>
+            </div>
+        </div>
         <div style="margin-top:30px; display:flex; justify-content:center; gap:12px;">
             <button onclick="closeEditModal()" class="btn-back">キャンセル</button>
-            <button class="btn-accent" onclick="saveProduct()">保存</button>
+            <button class="btn-accent" onclick="saveProduct()">登録・適用</button>
         </div>
     </div>
 </div>
 
 <div id="custom-item-modal" class="modal-overlay">
     <div class="modal-content">
-        <h3 style="background: var(--accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CUSTOM ITEM</h3>
+        <h3 style="background: var(--accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align:center;">CUSTOM ITEM</h3>
         <label>ITEM NAME</label><input type="text" id="custom-item-name" placeholder="例: 月限定商品">
         <label>PRICE (¥)</label><input type="number" id="custom-item-price" placeholder="50000">
         <div style="margin-top:30px; display:flex; justify-content:center; gap:12px;">
@@ -335,14 +483,36 @@
 </div>
 
 <div id="cat-edit-modal" class="modal-overlay">
-    <div class="modal-content">
-        <h3 style="margin-bottom:10px;">RENAME CATEGORY</h3>
-        <p style="font-size:0.85em; color:var(--muted); margin-bottom:15px;">一括でカテゴリ名を変更します</p>
-        <input type="text" id="cat-rename-input">
+    <div class="modal-content" style="text-align:center;">
+        <h3 style="margin-bottom:10px;">EDIT CATEGORY</h3>
+        <p style="font-size:0.85em; color:var(--muted); margin-bottom:15px;">カテゴリ名やカラーを変更します</p>
+        
+        <label style="text-align:left; font-size:0.85em; font-weight:bold; color:var(--muted);">カテゴリ名</label>
+        <input type="text" id="cat-rename-input" style="text-align:center; margin-bottom:15px;">
+        
+        <label style="text-align:left; font-size:0.85em; font-weight:bold; color:var(--muted);">カテゴリカラー</label>
+        <select id="cat-color-input">
+            <option value="">標準色</option>
+            <option value="#ef4444">赤</option>
+            <option value="#3b82f6">青</option>
+            <option value="#84cc16">黄緑</option>
+            <option value="#f59e0b">オレンジ</option>
+            <option value="#8b5cf6">紫</option>
+            <option value="#ec4899">ピンク</option>
+            <option value="#06b6d4">水色</option>
+        </select>
+
         <div style="margin-top:25px; display:flex; justify-content:center; gap:12px;">
             <button onclick="closeCatModal()" class="btn-back">CANCEL</button>
             <button class="btn-accent" onclick="saveCategoryRename()">適用する</button>
         </div>
+    </div>
+</div>
+
+<!-- 画像プレビュー用モーダル -->
+<div id="image-preview-modal" class="modal-overlay" onclick="closeImagePreview()" style="cursor: pointer; z-index: 4000;">
+    <div style="position:relative; max-width:90vw; max-height:90vh; display:flex; justify-content:center; align-items:center;">
+        <img id="preview-image" src="" style="max-width: 400px; max-height: 400px; width: 100%; height: 100%; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 3px solid var(--accent-solid); object-fit: contain;">
     </div>
 </div>
 
@@ -366,6 +536,7 @@
     const appId = 'chill-smoke-app-v1';
 
     let user=null, products=[], localCounts={}, customItems=[], currentTab='恒常商品', currentSettingsTab='恒常商品', isMakanai=false, hasUnsavedChanges=false, confirmCallback=null, editingId=null, isLoggedIn=false, oldCatNameForRename = null, searchQuery = "";
+    let appSettings = { logoUrl: "", textColor: "", bgColor: "", cardBgColor: "", accentColor: "", categoryColors: {} };
 
     const defaultProducts = [
         { id: 101, page: "恒常商品", category: "マルコポーロシリーズ", name: "レッド", price: 100000, recovery: "10", notes: "1箱10本入り" },
@@ -409,12 +580,70 @@
         user=u; if(u){
             onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), s => {
                 document.getElementById('loading-overlay').style.display='none'; document.getElementById('main-app').style.display='block';
-                if(s.exists() && !hasUnsavedChanges){ products=s.data().list; renderCalc(); if(currentTab==='設定')renderSettings(); }
-                else if(!s.exists() && !hasUnsavedChanges){ products=JSON.parse(JSON.stringify(defaultProducts)); renderCalc(); }
+                if(s.exists() && !hasUnsavedChanges){ 
+                    products=s.data().list; 
+                    appSettings.categoryColors = s.data().categoryColors || {};
+                    renderCalc(); if(currentTab==='設定')renderSettings(); 
+                }
+                else if(!s.exists() && !hasUnsavedChanges){ 
+                    products=JSON.parse(JSON.stringify(defaultProducts)); 
+                    appSettings.categoryColors = {};
+                    renderCalc(); 
+                }
             }, err => console.error(err));
+            
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'settings'), s => {
+                if(s.exists()) {
+                    appSettings = { ...appSettings, ...s.data() };
+                    applyAppVisualSettings();
+                    if(currentSettingsTab === 'システム') fillSystemSettingsInputs();
+                }
+            });
         }
     });
     initAuth();
+
+    function applyAppVisualSettings() {
+        const root = document.documentElement;
+        const wm = document.getElementById('watermark');
+        if(appSettings.logoUrl) {
+            wm.style.backgroundImage = `url("${appSettings.logoUrl}")`;
+            wm.style.display = 'block';
+        } else {
+            wm.style.display = 'none';
+        }
+        
+        if(appSettings.textColor) root.style.setProperty('--custom-primary', appSettings.textColor);
+        else root.style.removeProperty('--custom-primary');
+        if(appSettings.bgColor) root.style.setProperty('--custom-bg', appSettings.bgColor);
+        else root.style.removeProperty('--custom-bg');
+        if(appSettings.cardBgColor) root.style.setProperty('--custom-card-bg', appSettings.cardBgColor);
+        else root.style.removeProperty('--custom-card-bg');
+        if(appSettings.accentColor) root.style.setProperty('--custom-accent', appSettings.accentColor);
+        else root.style.removeProperty('--custom-accent');
+    }
+
+    function fillSystemSettingsInputs() {
+        document.getElementById('sys-logo').value = appSettings.logoUrl || "";
+        document.getElementById('sys-text-color').value = appSettings.textColor || "";
+        document.getElementById('sys-bg-color').value = appSettings.bgColor || "";
+        document.getElementById('sys-card-color').value = appSettings.cardBgColor || "";
+        document.getElementById('sys-accent-color').value = appSettings.accentColor || "";
+    }
+
+    window.applyAndSaveSystemSettings = async () => {
+        const newSettings = {
+            logoUrl: document.getElementById('sys-logo').value.trim(),
+            textColor: document.getElementById('sys-text-color').value.trim(),
+            bgColor: document.getElementById('sys-bg-color').value.trim(),
+            cardBgColor: document.getElementById('sys-card-color').value.trim(),
+            accentColor: document.getElementById('sys-accent-color').value.trim()
+        };
+        try {
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'settings'), newSettings);
+            showMessage("システム設定を保存しました", "success");
+        } catch (e) { console.error(e); showMessage("保存エラー", "error"); }
+    };
 
     window.toggleTheme = () => { 
         const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; 
@@ -433,29 +662,45 @@
         currentTab=t; const isSettings = (t === '設定');
         document.getElementById('main-tabs-area').style.display = isSettings ? 'none' : 'flex';
         document.getElementById('main-settings-btn').style.display = isSettings ? 'none' : 'block';
-        document.getElementById('search-area').style.display = isSettings ? 'none' : 'block';
+        document.getElementById('btn-search-toggle').style.display = isSettings ? 'none' : 'block';
+        
         document.querySelectorAll('.sticky-wrapper .tabs .tab-btn').forEach(b=>b.classList.remove('active')); 
         if(t==='恒常商品')document.getElementById('tab-kojo').classList.add('active'); 
         if(t==='卸商品')document.getElementById('tab-oroshi').classList.add('active');
+        
         document.getElementById('calc-view').style.display = isSettings ? 'none' : 'block'; 
         document.getElementById('settings-view').style.display = isSettings ? 'block' : 'none';
+        
         document.getElementById('calc-header-left').style.display = isSettings ? 'none' : 'flex'; 
         document.getElementById('calc-header-right').style.display = isSettings ? 'none' : 'flex';
         document.getElementById('settings-header-left').style.display = isSettings ? 'flex' : 'none'; 
         document.getElementById('settings-header-right').style.display = isSettings ? 'flex' : 'none';
+        
         document.getElementById('makanai-label').style.display = (t==='恒常商品') ? 'flex' : 'none';
         document.getElementById('btn-custom-item').style.display = (t==='恒常商品' && !isSettings) ? 'block' : 'none';
+        
+        if(!isSettings) closeSearchPopup();
         if(isSettings) renderSettings(); else renderCalc();
         window.scrollTo(0,0);
     }
 
+    window.toggleSearchPopup = () => {
+        const popup = document.getElementById('search-popup');
+        if (popup.classList.contains('active')) { closeSearchPopup(); } 
+        else { popup.classList.add('active'); document.getElementById('search-query').focus(); }
+    };
+    window.closeSearchPopup = () => {
+        document.getElementById('search-popup').classList.remove('active');
+        document.getElementById('search-query').value = ''; searchQuery = ""; renderCalc();
+    };
+    window.handleSearch = (query) => { searchQuery = query.toLowerCase(); renderCalc(); };
+
     window.openSettingsPrompt = () => { if (isLoggedIn) { switchTab('設定'); return; } document.getElementById('pass-in').value=''; document.getElementById('password-modal').style.display='flex'; setTimeout(()=>document.getElementById('pass-in').focus(),100); };
     window.verifyPassword = () => { if(document.getElementById('pass-in').value==='7073'){ isLoggedIn = true; document.getElementById('password-modal').style.display='none'; switchTab('設定'); } else { showMessage("PASSWORD INCORRECT", "error"); } };
     window.closePasswordModal = () => document.getElementById('password-modal').style.display='none';
-    window.confirmSaveSettings = async () => { showConfirm("設定を保存しますか？", async r => { if(r){ document.getElementById('cloud-status').textContent="SYNCING..."; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products}); hasUnsavedChanges=false; document.getElementById('unsaved-warning').style.display='none'; document.getElementById('cloud-status').textContent="SYNCED"; showMessage("SYNCED", "success"); }}); };
+    window.confirmSaveSettings = async () => { showConfirm("設定を保存しますか？", async r => { if(r){ document.getElementById('cloud-status').textContent="SYNCING..."; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products, categoryColors: appSettings.categoryColors || {}}); hasUnsavedChanges=false; document.getElementById('unsaved-warning').style.display='none'; document.getElementById('cloud-status').textContent="SYNCED"; showMessage("SYNCED", "success"); }}); };
 
-    window.handleSearch = (query) => { searchQuery = query.toLowerCase(); renderCalc(); };
-    window.openCustomItemModal = () => { document.getElementById('custom-item-name').value = ""; document.getElementById('custom-item-price').value = ""; document.getElementById('custom-item-modal').style.display = 'flex'; };
+    window.openCustomItemModal = () => { document.getElementById('custom-item-name').value = ""; document.getElementById('custom-item-price').value = ""; document.getElementById('custom-item-modal').style.display = 'flex'; setTimeout(()=>document.getElementById('custom-item-price').focus(),100); };
     window.closeCustomItemModal = () => document.getElementById('custom-item-modal').style.display = 'none';
     window.addCustomItem = () => { let name = document.getElementById('custom-item-name').value.trim(); const price = parseInt(document.getElementById('custom-item-price').value); if(isNaN(price)) { showMessage("価格を入力してください", "error"); return; } if(!name) name = "月限定商品"; const id = "custom_" + Date.now(); customItems.push({ id, name, price }); localCounts[id] = 1; closeCustomItemModal(); renderCalc(); showMessage("ADDED", "success"); };
     window.removeCustomItem = (id) => { customItems = customItems.filter(i => i.id !== id); delete localCounts[id]; renderCalc(); };
@@ -465,6 +710,9 @@
     window.resetAll = () => { showConfirm("注文をクリアしますか？", r=>{if(r){localCounts = {}; customItems = []; renderCalc();}}); };
     window.toggleMakanai = () => { isMakanai=document.getElementById('makanai-check').checked; renderCalc(); };
     
+    window.openImagePreview = (url) => { document.getElementById('preview-image').src = url; document.getElementById('image-preview-modal').style.display = 'flex'; };
+    window.closeImagePreview = () => { document.getElementById('image-preview-modal').style.display = 'none'; setTimeout(() => { document.getElementById('preview-image').src = ''; }, 200); };
+
     function updateTotal(){ let t=0; products.forEach(p=>{ if(p.page===currentTab){ let c=localCounts[p.id]||0, pr=p.price; if(currentTab==='恒常商品'&&isMakanai)pr=Math.floor(pr*0.6); t+=pr*c; }}); if (currentTab === '恒常商品') { customItems.forEach(i => { t += i.price * (localCounts[i.id] || 0); }); } document.getElementById('grand-total').textContent=t.toLocaleString(); }
     window.copyResult = () => { let t=0; products.forEach(p=>{ if(p.page===currentTab){ let c=localCounts[p.id]||0, pr=p.price; if(currentTab==='恒常商品'&&isMakanai)pr=Math.floor(pr*0.6); t+=pr*c; }}); if (currentTab === '恒常商品') { customItems.forEach(i => { t += i.price * (localCounts[i.id] || 0); }); } if(t===0){showMessage("EMPTY","error");return;} const tx=document.createElement('textarea'); tx.value=t.toString(); document.body.appendChild(tx); tx.select(); document.execCommand('copy'); document.body.removeChild(tx); showMessage("COPIED", "success"); };
 
@@ -472,60 +720,104 @@
         const container=document.getElementById('categories-container'); container.innerHTML=''; 
         if (currentTab === '恒常商品' && customItems.length > 0) {
             let h = `<div class="category-section" style="border-color: var(--accent-solid);"><h2 class="category-title" style="color: var(--accent-solid);">✨ CUSTOM ITEMS</h2>`;
-            customItems.forEach(i => { h += `<div class="product-row"><div class="product-info"><div class="product-name">${i.name} <button onclick="removeCustomItem('${i.id}')" style="background:transparent; color:var(--danger); padding:0 5px; font-size:0.75em; opacity:0.8;">(削除)</button></div><div class="product-meta"><span style="color:var(--accent-solid); font-weight:800;">¥${i.price.toLocaleString()}</span></div></div>
-                    <div class="product-controls"><input type="number" class="count-input" id="count-${i.id}" value="${localCounts[i.id]||0}" onchange="updateCountDirectly('${i.id}',this.value)"><div class="control-group"><button class="btn-calc" onclick="changeCount('${i.id}',1)">+</button></div></div></div>`; }); h += '</div>'; container.innerHTML += h;
+            customItems.forEach(i => { 
+                h += `<div class="product-row"><div class="product-info"><div class="product-name">${i.name} <button onclick="removeCustomItem('${i.id}')" style="background:transparent; color:var(--danger); padding:0 5px; font-size:0.75em; opacity:0.8;">(削除)</button></div><div class="product-meta"><span style="color:var(--accent-solid); font-weight:800;">¥${i.price.toLocaleString()}</span></div></div>
+                    <div class="product-controls">
+                        <div class="control-group"><button class="btn-calc" onclick="changeCount('${i.id}',-100)">-100</button><button class="btn-calc" onclick="changeCount('${i.id}',-10)">-10</button><button class="btn-calc" onclick="changeCount('${i.id}',-1)">-</button></div>
+                        <input type="number" class="count-input" id="count-${i.id}" value="${localCounts[i.id]||0}" onchange="updateCountDirectly('${i.id}',this.value)">
+                        <div class="control-group"><button class="btn-calc" onclick="changeCount('${i.id}',1)">+</button><button class="btn-calc" onclick="changeCount('${i.id}',10)">+10</button><button class="btn-calc" onclick="changeCount('${i.id}',100)">+100</button></div>
+                    </div></div>`; 
+            }); 
+            h += '</div>'; container.innerHTML += h;
         }
         const ps = products.filter(p => (p.page === currentTab && (p.name.toLowerCase().includes(searchQuery) || p.category.toLowerCase().includes(searchQuery))));
         const cats=[...new Set(ps.map(p=>p.category))];
-        cats.forEach(cat=>{ const cps=ps.filter(p=>p.category===cat); let h=`<div class="category-section"><h2 class="category-title">${cat}</h2>`; cps.forEach(p=>{ 
+        cats.forEach(cat=>{ 
+            const cps=ps.filter(p=>p.category===cat); 
+            let catColor = (appSettings.categoryColors && appSettings.categoryColors[cat]) ? appSettings.categoryColors[cat] : 'var(--primary)';
+            let borderStyle = (appSettings.categoryColors && appSettings.categoryColors[cat]) ? `border-top: 3px solid ${catColor};` : '';
+            let h=`<div class="category-section" style="${borderStyle}"><h2 class="category-title" style="color: ${catColor};">${cat}</h2>`; 
+            cps.forEach(p=>{ 
                 let rec = p.recovery || ''; let prDisp=`¥${p.price.toLocaleString()}`; if(currentTab==='恒常商品'&&isMakanai)prDisp=`<span style="text-decoration:line-through; font-size:0.8em; opacity:0.6;">¥${p.price.toLocaleString()}</span> ¥${Math.floor(p.price*0.6).toLocaleString()}`;
-                h+=`<div class="product-row"><div class="product-info"><div class="product-name">${p.name}</div><div class="product-meta"><span style="color:var(--accent-solid); font-weight:800; min-width:85px;">${prDisp}</span><span>${rec && rec !== '0' ?'回復量:'+rec+'%':''}</span><span style="color:var(--muted); font-size:0.85em;">${p.notes?p.notes:''}</span></div></div>
+                let noteColor = p.color ? p.color : 'var(--muted)'; let noteWeight = p.color ? '800' : 'normal';
+                
+                let nameDisplay = `<div class="product-name">${p.name}</div>`;
+                if (p.imageUrl) {
+                    nameDisplay = `<div class="product-name" style="cursor:pointer; color:var(--accent-solid); text-decoration:underline; text-underline-offset:3px;" onclick="openImagePreview('${p.imageUrl}')" title="画像を見る">${p.name}</div>`;
+                }
+
+                h+=`<div class="product-row"><div class="product-info">${nameDisplay}<div class="product-meta"><span style="color:var(--accent-solid); font-weight:800; min-width:85px;">${prDisp}</span><span>${rec && rec !== '0' ?'回復量:'+rec+'%':''}</span><span style="color:${noteColor}; font-weight:${noteWeight}; font-size:0.85em;">${p.notes?p.notes:''}</span></div></div>
                 <div class="product-controls"><div class="control-group"><button class="btn-calc" onclick="changeCount(${p.id},-100)">-100</button><button class="btn-calc" onclick="changeCount(${p.id},-10)">-10</button><button class="btn-calc" onclick="changeCount(${p.id},-1)">-</button></div>
                 <input type="number" class="count-input" id="count-${p.id}" value="${localCounts[p.id]||0}" onchange="updateCountDirectly(${p.id},this.value)">
                 <div class="control-group"><button class="btn-calc" onclick="changeCount(${p.id},1)">+</button><button class="btn-calc" onclick="changeCount(${p.id},10)">+10</button><button class="btn-calc" onclick="changeCount(${p.id},100)">+100</button></div></div></div>`; }); h+='</div>'; container.innerHTML+=h; }); updateTotal(); 
     }
 
-    window.switchSettingsTab = t => { currentSettingsTab=t; document.querySelectorAll('#settings-view .tabs .tab-btn').forEach(b=>b.classList.remove('active')); if(t==='恒常商品')document.getElementById('settings-tab-kojo').classList.add('active'); else document.getElementById('settings-tab-oroshi').classList.add('active'); renderSettings(); };
+    window.switchSettingsTab = t => { 
+        currentSettingsTab=t; 
+        document.querySelectorAll('#settings-view .tabs .tab-btn').forEach(b=>b.classList.remove('active')); 
+        if(t==='恒常商品')document.getElementById('settings-tab-kojo').classList.add('active'); 
+        else if(t==='卸商品')document.getElementById('settings-tab-oroshi').classList.add('active'); 
+        else document.getElementById('settings-tab-system').classList.add('active');
+        
+        if (t === 'システム') {
+            document.getElementById('settings-list-container').style.display = 'none';
+            document.getElementById('reset-container').style.display = 'none';
+            document.getElementById('system-settings-container').style.display = 'block';
+            fillSystemSettingsInputs();
+        } else {
+            document.getElementById('settings-list-container').style.display = 'block';
+            document.getElementById('reset-container').style.display = 'block';
+            document.getElementById('system-settings-container').style.display = 'none';
+            renderSettings(); 
+        }
+    };
     function renderSettings(){ 
         const c=document.getElementById('settings-list-container'); c.innerHTML=''; const ps=products.filter(p=>p.page===currentSettingsTab); const cats=[...new Set(ps.map(p=>p.category))];
         cats.forEach((cat, cIdx)=>{ 
-            let h=`<div class="category-section">
-                <div class="category-header">
-                    <div class="category-title-group">
-                        <h3 class="category-title">${cat}</h3>
-                        <button class="btn-order" style="padding:2px 6px;" onclick="openCatRenameModal('${cat}')" title="カテゴリ名の変更">✎</button>
-                    </div>
-                    <div class="header-right">
-                        <button class="btn-success" style="padding:6px 12px; font-size:0.75em;" onclick="openAddModal('${currentSettingsTab}', '${cat}')">追加</button>
-                        <button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', -1)" ${cIdx === 0 ? 'disabled' : ''}>▲</button>
-                        <button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', 1)" ${cIdx === cats.length - 1 ? 'disabled' : ''}>▼</button>
-                    </div>
-                </div>`; 
-            const catPs = ps.filter(p=>p.category===cat); 
-            catPs.forEach((p, pIdx)=>{ 
-                h+=`<div class="settings-item">
-                    <div class="settings-info">
-                        <strong>${p.name}</strong>
-                        <div style="font-size:0.85em; color:var(--muted);">¥${p.price.toLocaleString()} ${p.recovery && p.recovery !== '0' ? '/ 回復量: ' + p.recovery + '%' : ''}</div>
-                        <div style="font-size:0.75em; color:var(--muted); opacity:0.8;">${p.notes || ''}</div>
-                    </div>
-                    <div class="settings-actions-group">
-                        <div class="settings-btns">
-                            <button class="btn-accent" style="padding:6px 10px; font-size:0.75em;" onclick="editProduct(${p.id})">編集</button>
-                            <button class="btn-danger" style="padding:6px 10px; font-size:0.75em;" onclick="delP(${p.id})">削除</button>
-                        </div>
-                        <div class="settings-order-stack">
-                            <button class="btn-order btn-small-order" onclick="moveProduct(${p.id}, -1)" ${pIdx === 0 ? 'disabled' : ''}>▲</button>
-                            <button class="btn-order btn-small-order" onclick="moveProduct(${p.id}, 1)" ${pIdx === catPs.length - 1 ? 'disabled' : ''}>▼</button>
-                        </div>
-                    </div>
-                </div>`; 
+            let catColor = (appSettings.categoryColors && appSettings.categoryColors[cat]) ? appSettings.categoryColors[cat] : 'var(--primary)';
+            let borderStyle = (appSettings.categoryColors && appSettings.categoryColors[cat]) ? `border-top: 3px solid ${catColor};` : '';
+            
+            let h=`<div class="category-section" style="${borderStyle}"><div class="category-header"><div class="category-title-group"><h3 class="category-title" style="color: ${catColor};">${cat}</h3><button class="btn-order" style="padding:2px 6px;" onclick="openCatRenameModal('${cat}')" title="カテゴリ設定の変更">✎</button></div><div class="header-right"><button class="btn-success" style="padding:6px 12px; font-size:0.75em;" onclick="openAddModal('${currentSettingsTab}', '${cat}')">追加</button><button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', -1)" ${cIdx === 0 ? 'disabled' : ''}>▲</button><button class="btn-order" onclick="moveCategory('${currentSettingsTab}', '${cat}', 1)" ${cIdx === cats.length - 1 ? 'disabled' : ''}>▼</button></div></div>`; 
+            const catPs = ps.filter(p=>p.category===cat); catPs.forEach((p, pIdx)=>{ 
+                let noteColor = p.color ? p.color : 'var(--muted)'; let noteWeight = p.color ? '800' : 'normal';
+                
+                let nameDisplay = `<strong style="display:block; margin-bottom:2px;">${p.name}</strong>`;
+                if (p.imageUrl) {
+                    nameDisplay = `<strong style="display:block; margin-bottom:2px; cursor:pointer; color:var(--accent-solid); text-decoration:underline; text-underline-offset:3px;" onclick="openImagePreview('${p.imageUrl}')" title="画像を見る">${p.name}</strong>`;
+                }
+
+                h+=`<div class="settings-item"><div class="settings-info">${nameDisplay}<div style="font-size:0.85em; color:var(--muted);">¥${p.price.toLocaleString()} ${p.recovery && p.recovery !== '0' ? '/ 回復量: ' + p.recovery + '%' : ''}</div><div style="font-size:0.75em; color:${noteColor}; font-weight:${noteWeight}; opacity:1;">${p.notes || ''}</div></div><div class="settings-actions-group"><div class="settings-btns"><button class="btn-accent" style="padding:6px 10px; font-size:0.75em;" onclick="editProduct(${p.id})">編集</button><button class="btn-danger" style="padding:6px 10px; font-size:0.75em;" onclick="delP(${p.id})">削除</button></div><div class="settings-order-stack"><button class="btn-order btn-small-order" onclick="moveProduct(${p.id}, -1)" ${pIdx === 0 ? 'disabled' : ''}>▲</button><button class="btn-order btn-small-order" onclick="moveProduct(${p.id}, 1)" ${pIdx === catPs.length - 1 ? 'disabled' : ''}>▼</button></div></div></div>`; 
             }); h+='</div>'; c.innerHTML+=h; });
     }
 
-    window.openCatRenameModal = (oldName) => { oldCatNameForRename = oldName; document.getElementById('cat-rename-input').value = oldName; document.getElementById('cat-edit-modal').style.display = 'flex'; };
+    window.openCatRenameModal = (oldName) => { 
+        oldCatNameForRename = oldName; 
+        document.getElementById('cat-rename-input').value = oldName; 
+        document.getElementById('cat-color-input').value = (appSettings.categoryColors && appSettings.categoryColors[oldName]) ? appSettings.categoryColors[oldName] : "";
+        document.getElementById('cat-edit-modal').style.display = 'flex'; 
+    };
     window.closeCatModal = () => { document.getElementById('cat-edit-modal').style.display = 'none'; };
-    window.saveCategoryRename = () => { const newName = document.getElementById('cat-rename-input').value.trim(); if(!newName || newName === oldCatNameForRename) { closeCatModal(); return; } products.forEach(p => { if(p.page === currentSettingsTab && p.category === oldCatNameForRename) p.category = newName; }); markAsUnsaved(); renderSettings(); closeCatModal(); showMessage("RENAMED", "success"); };
+    window.saveCategoryRename = () => { 
+        const newName = document.getElementById('cat-rename-input').value.trim(); 
+        const newColor = document.getElementById('cat-color-input').value;
+        if(!newName) return; 
+        
+        if (newName !== oldCatNameForRename) {
+            products.forEach(p => { if(p.page === currentSettingsTab && p.category === oldCatNameForRename) p.category = newName; }); 
+        }
+        
+        if(!appSettings.categoryColors) appSettings.categoryColors = {};
+        if(newName !== oldCatNameForRename && oldCatNameForRename) {
+            delete appSettings.categoryColors[oldCatNameForRename];
+        }
+        if (newColor) {
+            appSettings.categoryColors[newName] = newColor;
+        } else {
+            delete appSettings.categoryColors[newName];
+        }
+
+        markAsUnsaved(); renderSettings(); closeCatModal(); showMessage("UPDATED", "success"); 
+    };
     
     window.moveCategory = (page, targetCat, direction) => {
         const ps = products.filter(p => p.page === page); const otherPs = products.filter(p => p.page !== page); const cats = [...new Set(ps.map(p => p.category))]; const idx = cats.indexOf(targetCat); const newIdx = idx + direction; if (newIdx < 0 || newIdx >= cats.length) return; [cats[idx], cats[newIdx]] = [cats[newIdx], cats[idx]]; const reorderedPs = []; cats.forEach(c => reorderedPs.push(...ps.filter(p => p.category === c))); products = [...otherPs, ...reorderedPs]; markAsUnsaved(); renderSettings();
@@ -537,14 +829,14 @@
 
     window.updateCategoryList = (preSelectedCat = null) => { const selectedPage = document.getElementById('edit-page').value; const select = document.getElementById('edit-category-select'); const cats = [...new Set(products.filter(p => p.page === selectedPage).map(p => p.category))]; select.innerHTML = '<option value="">▼ 既存のカテゴリから選択</option>'; cats.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`); select.innerHTML += '<option value="__NEW__">＋ 新規カテゴリを作成</option>'; if (preSelectedCat && cats.includes(preSelectedCat)) { select.value = preSelectedCat; handleCategorySelect(preSelectedCat); } else if (preSelectedCat) { select.value = "__NEW__"; handleCategorySelect("__NEW__"); document.getElementById('edit-category-manual').value = preSelectedCat; } else { select.value = ""; handleCategorySelect(""); } };
     window.handleCategorySelect = (val) => { const manualInput = document.getElementById('edit-category-manual'); if (val === "__NEW__") { manualInput.style.display = 'block'; manualInput.value = ""; } else { manualInput.style.display = 'none'; manualInput.value = val; } };
-    window.openAddModal = (page = null, category = null) => { editingId = null; document.getElementById('modal-title').textContent = "NEW PRODUCT"; document.getElementById('edit-page').value = page || currentSettingsTab; updateCategoryList(category); document.getElementById('edit-name').value = ""; document.getElementById('edit-price').value = ""; document.getElementById('edit-recovery').value = ""; document.getElementById('edit-notes').value = ""; document.getElementById('edit-modal').style.display = 'flex'; };
-    window.editProduct = id => { const p = products.find(i => i.id === id); if(!p) return; editingId = id; document.getElementById('modal-title').textContent = "EDIT PRODUCT"; document.getElementById('edit-page').value = p.page; updateCategoryList(p.category); document.getElementById('edit-name').value = p.name; document.getElementById('edit-price').value = p.price; document.getElementById('edit-recovery').value = p.recovery || ''; document.getElementById('edit-notes').value = p.notes || ''; document.getElementById('edit-modal').style.display = 'flex'; };
-    window.saveProduct = () => { const page = document.getElementById('edit-page').value; const cat = document.getElementById('edit-category-manual').value.trim(); const name = document.getElementById('edit-name').value.trim(); const price = parseInt(document.getElementById('edit-price').value); if(!cat || !name || isNaN(price)){ showMessage("入力漏れがあります", "error"); return; } const productData = { page, category: cat, name, price, recovery: document.getElementById('edit-recovery').value, notes: document.getElementById('edit-notes').value }; if (editingId === null) { products.push({id: Date.now(), ...productData}); showMessage("ADDED", "success"); } else { const index = products.findIndex(p => p.id === editingId); if(index !== -1) products[index] = { ...products[index], ...productData }; showMessage("UPDATED", "success"); } markAsUnsaved(); renderSettings(); closeEditModal(); };
+    window.openAddModal = (page = null, category = null) => { editingId = null; document.getElementById('modal-title').textContent = "NEW PRODUCT"; document.getElementById('edit-page').value = page || currentSettingsTab; updateCategoryList(category); document.getElementById('edit-name').value = ""; document.getElementById('edit-price').value = ""; document.getElementById('edit-recovery').value = ""; document.getElementById('edit-notes').value = ""; document.getElementById('edit-color').value = ""; document.getElementById('edit-image-url').value = ""; document.getElementById('edit-modal').style.display = 'flex'; };
+    window.editProduct = id => { const p = products.find(i => i.id === id); if(!p) return; editingId = id; document.getElementById('modal-title').textContent = "EDIT PRODUCT"; document.getElementById('edit-page').value = p.page; updateCategoryList(p.category); document.getElementById('edit-name').value = p.name; document.getElementById('edit-price').value = p.price; document.getElementById('edit-recovery').value = p.recovery || ''; document.getElementById('edit-notes').value = p.notes || ''; document.getElementById('edit-color').value = p.color || ''; document.getElementById('edit-image-url').value = p.imageUrl || ''; document.getElementById('edit-modal').style.display = 'flex'; };
+    window.saveProduct = () => { const page = document.getElementById('edit-page').value; const cat = document.getElementById('edit-category-manual').value.trim(); const name = document.getElementById('edit-name').value.trim(); const price = parseInt(document.getElementById('edit-price').value); if(!cat || !name || isNaN(price)){ showMessage("入力漏れがあります", "error"); return; } const productData = { page, category: cat, name, price, recovery: document.getElementById('edit-recovery').value, notes: document.getElementById('edit-notes').value, color: document.getElementById('edit-color').value.trim(), imageUrl: document.getElementById('edit-image-url').value.trim() }; if (editingId === null) { products.push({id: Date.now(), ...productData}); showMessage("ADDED", "success"); } else { const index = products.findIndex(p => p.id === editingId); if(index !== -1) products[index] = { ...products[index], ...productData }; showMessage("UPDATED", "success"); } markAsUnsaved(); renderSettings(); closeEditModal(); };
     window.delP = id => { showConfirm("この商品を削除しますか？", r => { if(r){ products=products.filter(p=>p.id!==id); markAsUnsaved(); renderSettings(); }}); };
     window.closeEditModal = () => { document.getElementById('edit-modal').style.display = 'none'; editingId = null; };
     window.closePasswordModal = () => document.getElementById('password-modal').style.display='none';
     window.closeCustomItemModal = () => document.getElementById('custom-item-modal').style.display='none';
-    window.restoreDefaultProducts = () => { showConfirm("初期状態に戻しますか？(クラウドも上書きされます)", async r => { if(r){ products=JSON.parse(JSON.stringify(defaultProducts)); await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products}); hasUnsavedChanges=false; renderSettings(); showMessage("RESET", "success"); }}); };
+    window.restoreDefaultProducts = () => { showConfirm("初期状態に戻しますか？(クラウドも上書きされます)", async r => { if(r){ products=JSON.parse(JSON.stringify(defaultProducts)); await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'master', 'products'), {list: products, categoryColors: {}}); appSettings.categoryColors = {}; hasUnsavedChanges=false; renderSettings(); showMessage("RESET", "success"); }}); };
     function markAsUnsaved() { hasUnsavedChanges=true; document.getElementById('unsaved-warning').style.display='inline'; }
     function showMessage(m,t){ const b=document.getElementById('message-box'); b.textContent=m; b.style.background=t==='error'?'#ef4444':'#10b981'; b.style.display='block'; setTimeout(()=>{b.style.display='none';},2500); }
     window.showConfirm = (m,c) => { document.getElementById('confirm-msg').textContent=m; document.getElementById('confirm-modal').style.display='flex'; confirmCallback=c; };
